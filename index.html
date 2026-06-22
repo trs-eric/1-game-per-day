@@ -229,7 +229,7 @@
     <div class="grid md:grid-cols-2 gap-10 items-center">
       <div>
         <h3 class="text-4xl font-semibold tracking-tight mb-3">Follow along</h3>
-        <p class="text-lg text-white/70">I'm building this in the open. The first game is almost ready - each one lives in its own folder under <code class="font-mono text-sm bg-white/10 px-1 py-0.5 rounded">games/</code>.</p>
+        <p class="text-lg text-white/70">I'm building this in the open. Games live in their own folders under <code class="font-mono text-sm bg-white/10 px-1 py-0.5 rounded">games/</code>. The first entry is live in the gallery below.</p>
         
         <div class="mt-6 flex gap-x-3">
           <a href="template/" 
@@ -268,7 +268,7 @@
     }
 
     // Game data - populated manually when adding new games (see root README)
-    const GITHUB_USER = "trs-eric"; // GitHub username
+    const GITHUB_USER = "trs-eric"; // GitHub username (used for source links)
 
     const games = [
       {
@@ -334,7 +334,7 @@
               <span>Play</span>
             </a>
             
-            <a href="https://github.com/trs-eric/1-game-per-day/tree/main/games/${game.id}" target="_blank"
+            <a href="https://github.com/${GITHUB_USER}/1-game-per-day/tree/main/games/${game.id}" target="_blank"
                class="px-4 py-2.5 rounded-2xl border border-white/15 hover:bg-white/5 transition flex items-center justify-center"
                title="View source on GitHub">
               <i class="fa-brands fa-github"></i>
@@ -356,9 +356,9 @@
               <div class="mx-auto w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-4">
                 <i class="fa-solid fa-gamepad text-2xl text-white/60"></i>
               </div>
-              <h3 class="font-semibold text-xl mb-2">Day 1 is coming soon</h3>
+              <h3 class="font-semibold text-xl mb-2">No games match your filter</h3>
               <p class="text-white/60 text-sm mb-6">
-                I'm building the first game right now. Follow along as I share the progress here.
+                Try clearing the search or selecting a different filter.
               </p>
               <a href="template/" 
                  class="inline-flex items-center gap-x-2 px-5 py-2 rounded-2xl bg-white text-black text-sm font-medium hover:bg-white/90 transition">
@@ -383,7 +383,7 @@
       const statusEl = document.getElementById('game-status');
       countEl.textContent = games.length;
       if (games.length === 0) {
-        statusEl.innerHTML = '<span id="game-count">0</span> games published yet - the first one is almost ready!';
+        statusEl.innerHTML = '<span id="game-count">0</span> games published yet.';
       } else if (games.length === 1) {
         statusEl.innerHTML = '<span id="game-count">1</span> game published so far';
       } else {

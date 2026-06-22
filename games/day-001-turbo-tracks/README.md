@@ -1,38 +1,26 @@
-# Game Template
+# Grand Turbo Racing
 
-This is the recommended starting point for a new "1 Game Per Day" entry.
+**Day 001** - 1 Game Per Day project by Eric Canales.
 
-## Files
+A pure Canvas 2D top-down racer with realistic driving physics, wheel slip/skidding at speed, AI opponents, 3-lap races, and 7 distinct tracks.
 
-- `index.html` - Self-contained game page with header and canvas
-- `game.js` - All game logic here
+## Features
+- 4 unique cars with different handling: Flux GT, Scarlet GT, Classic Turbo, Venom GT
+- Player color selection
+- 7 varied tracks (ovals, chicanes, S-bends, hairpins, etc.)
+- Skidding physics, on-track starting grid with painted squares
+- In-game menu with car + track previews
+- Engine, skid, lap, and finish audio (Web Audio API)
+- Camera follows player smoothly
 
-## Steps to create a new game
+## Play
+Open `index.html` in a browser (or via the main gallery).
 
-1. Copy this folder:
-   ```bash
-   cp -r template ../games/day-005-my-awesome-game
-   ```
-2. Edit `index.html`:
-   - Change title and day number
-   - Adjust canvas size if needed
-3. Rewrite `game.js` with your game.
-4. Add your game to the main `index.html` gallery list.
-5. Add a screenshot to `assets/thumbnails/` (optional but recommended).
+**Controls:** Arrow keys or WASD to drive. Mouse/click for menus.
 
-Keep games fun and polished. There are no size limits.
+## Project
+See the [root README](../../README.md) for how games are built and the full gallery at the site root.
 
-## Development Notes
+Built in a few hours as an AI-assisted daily challenge entry until playability plateaued. All games in this project follow the same approach.
 
-- Use regular dashes (-) only.
-- Extract pure logic (e.g. game rules, scoring) into functions and add unit tests where possible to verify behavior.
-- Follow the main project guidelines in the root README.
-
-## Tips
-
-- Use requestAnimationFrame + delta time
-- Make the first interaction obvious
-- Add a short instruction line
-- Target high quality code over arbitrary line limits
-
-Have fun!
+MIT licensed (see root LICENSE).

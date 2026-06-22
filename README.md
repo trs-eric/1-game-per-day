@@ -30,7 +30,7 @@ Currently includes: **Grand Turbo Racing** (day-001).
 ## Development Guidelines
 
 - No size limits - focus on making the best possible games.
-- When programming game logic, extract pure functions and include unit tests (simple assertions, Node, or browser tests) to verify correctness.
+- When programming game logic, extract pure functions where practical and include unit tests (simple assertions, Node, or browser tests) to verify correctness.
 
 ## Quick Start (local)
 
@@ -47,7 +47,7 @@ Open http://localhost:8000
 
 1. Copy the template:
    ```bash
-   cp -r template games/day-001-your-game-name
+   cp -r template games/day-002-your-game-name
    ```
 
 2. Customize the new folder:
@@ -61,10 +61,10 @@ Open http://localhost:8000
 
 4. (Recommended) Add a thumbnail:
    - Take a screenshot
-   - Save it to `assets/thumbnails/day-001-xxx.png`
+   - Save it to `assets/thumbnails/day-002-xxx.png`
    - Reference it in the game entry
 
-5. For any pure logic (e.g., physics, scoring, AI), add unit tests (simple assertions or a dedicated test file).
+5. For any pure logic (e.g., physics, scoring, AI), add unit tests (simple assertions or a dedicated test file) where practical.
 
 6. Commit and push.
 

@@ -11,7 +11,7 @@ This is the recommended starting point for a new "1 Game Per Day" entry.
 
 1. Copy this folder:
    ```bash
-   cp -r template ../games/day-005-my-awesome-game
+   cp -r template ../games/day-002-my-awesome-game
    ```
 2. Edit `index.html`:
    - Change title and day number
@@ -24,7 +24,6 @@ Keep games fun and polished. There are no size limits.
 
 ## Development Notes
 
-- Use regular dashes (-) only.
 - Extract pure logic (e.g. game rules, scoring) into functions and add unit tests where possible to verify behavior.
 - Follow the main project guidelines in the root README.
 - Games are not restricted to a single screen.
