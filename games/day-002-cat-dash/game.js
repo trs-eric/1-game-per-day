@@ -272,6 +272,11 @@ function update(dt) {
   }
   player.vx = Math.max(-MAX_VX, Math.min(MAX_VX, player.vx));
 
+  // Ensure facing always matches actual travel direction (prevents visual "wrong way" bugs)
+  if (Math.abs(player.vx) > 0.1) {
+    player.facing = player.vx > 0 ? 1 : -1;
+  }
+
   // Normal jump (edge triggered)
   if (spacePressed && !prevSpace && player.onGround) {
     player.vy = NORMAL_JUMP;
