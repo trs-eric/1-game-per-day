@@ -303,118 +303,122 @@ class Car {
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.fillRect(-len/2 + 2, -wid/2 + 1, len + 2, wid + 2);
 
-    if (this.modelId === 0) { // Flux GT - DeLorean: boxy with curves hint
+    if (this.modelId === 0) { // Flux GT - DeLorean: boxy futuristic with flat sides and angular rear
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.rect(-len/2, -wid/2, len, wid);
-      ctx.fill();
-      // Rounded corners for realism
-      ctx.beginPath();
-      ctx.moveTo(-len/2 + 3, -wid/2);
-      ctx.lineTo(len/2 - 3, -wid/2);
-      ctx.quadraticCurveTo(len/2, -wid/2 + 2, len/2, -wid/2 + 5);
-      ctx.lineTo(len/2, wid/2 - 5);
-      ctx.quadraticCurveTo(len/2, wid/2 - 2, len/2 - 3, wid/2);
-      ctx.lineTo(-len/2 + 3, wid/2);
-      ctx.quadraticCurveTo(-len/2, wid/2 - 2, -len/2, wid/2 - 5);
-      ctx.lineTo(-len/2, -wid/2 + 5);
-      ctx.quadraticCurveTo(-len/2, -wid/2 + 2, -len/2 + 3, -wid/2);
-      ctx.fill();
-      // Doors
-      ctx.fillStyle = '#333';
-      ctx.fillRect(-len/2 + 5, -wid/2 + 2, 12, wid - 4);
-      ctx.fillRect(-len/2 + 20, -wid/2 + 2, 12, wid - 4);
-      // Headlights realistic
-      ctx.fillStyle = '#ffeb3b';
-      ctx.fillRect(len/2 - 8, -wid/2 + 2, 5, 3);
-      ctx.fillRect(len/2 - 8, wid/2 - 5, 5, 3);
-    } else if (this.modelId === 1) { // Scarlet GT - Testarossa: long low wedge with curves
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(-len/2, -wid/2 + 2);
-      ctx.lineTo(len/2 - 10, -wid/2);
-      ctx.quadraticCurveTo(len/2, -wid/2 + 1, len/2, 0);
-      ctx.quadraticCurveTo(len/2, wid/2 - 1, len/2 - 10, wid/2);
-      ctx.lineTo(-len/2, wid/2 - 2);
-      ctx.quadraticCurveTo(-len/2 + 5, wid/2 - 2, -len/2, wid/2 - 5);
-      ctx.lineTo(-len/2, -wid/2 + 5);
-      ctx.quadraticCurveTo(-len/2 + 5, -wid/2 + 2, -len/2, -wid/2 + 2);
-      ctx.fill();
-      // Side vents
-      ctx.fillStyle = '#222';
-      ctx.fillRect(-len/2 + 15, -wid/2 + 1, 8, 3);
-      ctx.fillRect(-len/2 + 15, wid/2 - 4, 8, 3);
-      // Headlights
-      ctx.fillStyle = '#ffeb3b';
-      ctx.beginPath();
-      ctx.ellipse(len/2 - 5, -wid/2 + 3, 3, 1.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(len/2 - 5, wid/2 - 3, 3, 1.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (this.modelId === 2) { // Classic Turbo - Porsche 911: curved body
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(-len/2 + 5, -wid/2);
-      ctx.quadraticCurveTo(len/2 - 5, -wid/2 - 2, len/2, -wid/2 + 3);
-      ctx.quadraticCurveTo(len/2 + 2, 0, len/2, wid/2 - 3);
-      ctx.quadraticCurveTo(len/2 - 5, wid/2 + 2, -len/2 + 5, wid/2);
-      ctx.quadraticCurveTo(-len/2 - 2, 0, -len/2 + 5, -wid/2);
-      ctx.fill();
-      // Spoiler
-      ctx.fillStyle = '#222';
-      ctx.fillRect(-len/2 + 2, -wid/2 - 1, 6, 2);
-      ctx.fillRect(-len/2 + 2, wid/2 - 1, 6, 2);
-      // Headlights
-      ctx.fillStyle = '#ffeb3b';
-      ctx.fillRect(len/2 - 6, -wid/2 + 2, 4, 3);
-      ctx.fillRect(len/2 - 6, wid/2 - 5, 4, 3);
-    } else { // Venom GT - Viper: long curved aggressive
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(-len/2, -wid/2 + 1);
-      ctx.quadraticCurveTo(len/2 - 5, -wid/2, len/2 + 5, 0);
-      ctx.quadraticCurveTo(len/2 - 5, wid/2, -len/2, wid/2 - 1);
+      ctx.moveTo(-len/2 + 2, -wid/2);
+      ctx.lineTo(len/2 - 8, -wid/2);
+      ctx.lineTo(len/2 + 2, -wid/2 + 3);
+      ctx.lineTo(len/2 + 2, wid/2 - 3);
+      ctx.lineTo(len/2 - 8, wid/2);
+      ctx.lineTo(-len/2 + 2, wid/2);
+      ctx.lineTo(-len/2 - 2, wid/2 - 4);
+      ctx.lineTo(-len/2 - 2, -wid/2 + 4);
       ctx.closePath();
       ctx.fill();
-      // Long hood curve
+      // Windows
+      ctx.fillStyle = '#111';
+      ctx.fillRect(-len/2 + 4, -wid/2 + 3, 14, wid-6);
+      // Angular details
+      ctx.fillStyle = '#333';
+      ctx.fillRect(-len/2 + 20, -wid/2 + 2, 8, wid-4);
+      // Headlights
+      ctx.fillStyle = '#ffeb3b';
+      ctx.fillRect(len/2 - 5, -wid/2 + 1, 4, 2);
+      ctx.fillRect(len/2 - 5, wid/2 - 3, 4, 2);
+    } else if (this.modelId === 1) { // Scarlet GT - Testarossa: long low with sharp front and side curves
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(-len/2 + 5, -wid/2 + 1);
+      ctx.lineTo(len/2 - 12, -wid/2);
+      ctx.quadraticCurveTo(len/2 + 2, -wid/2 + 1, len/2 + 4, 0);
+      ctx.quadraticCurveTo(len/2 + 2, wid/2 - 1, len/2 - 12, wid/2);
+      ctx.lineTo(-len/2 + 5, wid/2 - 1);
+      ctx.quadraticCurveTo(-len/2, wid/2 - 2, -len/2, 0);
+      ctx.quadraticCurveTo(-len/2, -wid/2 + 2, -len/2 + 5, -wid/2 + 1);
+      ctx.closePath();
+      ctx.fill();
+      // Side curves/vents
       ctx.fillStyle = '#222';
       ctx.beginPath();
-      ctx.moveTo(-len/2 + 5, -wid/2 + 2);
-      ctx.quadraticCurveTo(len/2 - 8, -wid/2 + 1, len/2, 0);
-      ctx.quadraticCurveTo(len/2 - 8, wid/2 - 1, -len/2 + 5, wid/2 - 2);
+      ctx.moveTo(-len/2 + 12, -wid/2 + 2);
+      ctx.quadraticCurveTo(-len/2 + 25, -wid/2 + 0.5, -len/2 + 12, wid/2 - 2);
       ctx.fill();
-      // Side exhausts
-      ctx.fillStyle = '#444';
-      ctx.fillRect(len/2 - 15, -wid/2 + 3, 10, 2);
-      ctx.fillRect(len/2 - 15, wid/2 - 5, 10, 2);
+      // Headlights curved
+      ctx.fillStyle = '#ffeb3b';
+      ctx.beginPath();
+      ctx.ellipse(len/2 - 3, -wid/2 + 2, 3, 1.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(len/2 - 3, wid/2 - 2, 3, 1.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this.modelId === 2) { // Classic Turbo - Porsche 911: compact rounded with rear curve and spoiler
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(-len/2 + 8, -wid/2);
+      ctx.quadraticCurveTo(len/2 - 4, -wid/2 - 1, len/2 + 1, -wid/2 + 4);
+      ctx.quadraticCurveTo(len/2 + 3, 0, len/2 + 1, wid/2 - 4);
+      ctx.quadraticCurveTo(len/2 - 4, wid/2 + 1, -len/2 + 8, wid/2);
+      ctx.quadraticCurveTo(-len/2 + 2, wid/2 - 1, -len/2 + 8, -wid/2);
+      ctx.closePath();
+      ctx.fill();
+      // Rear spoiler
+      ctx.fillStyle = '#222';
+      ctx.fillRect(-len/2 + 1, -wid/2 - 2, 5, 2);
+      ctx.fillRect(-len/2 + 1, wid/2 , 5, 2);
+      // Headlights
+      ctx.fillStyle = '#ffeb3b';
+      ctx.fillRect(len/2 - 5, -wid/2 + 1, 3, 3);
+      ctx.fillRect(len/2 - 5, wid/2 - 4, 3, 3);
+    } else { // Venom GT - Viper: very long low with aggressive front curve and side lines
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(-len/2 + 2, -wid/2 + 1);
+      ctx.quadraticCurveTo(len/2 - 8, -wid/2 + 0.5, len/2 + 8, 0);
+      ctx.quadraticCurveTo(len/2 - 8, wid/2 - 0.5, -len/2 + 2, wid/2 - 1);
+      ctx.closePath();
+      ctx.fill();
+      // Long hood accent
+      ctx.fillStyle = '#222';
+      ctx.beginPath();
+      ctx.moveTo(-len/2 + 8, -wid/2 + 2);
+      ctx.quadraticCurveTo(len/2 - 5, -wid/2 + 1, len/2 + 5, 0);
+      ctx.quadraticCurveTo(len/2 - 5, wid/2 - 1, -len/2 + 8, wid/2 - 2);
+      ctx.fill();
+      // Side lines
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-len/2 + 15, -wid/2 + 2);
+      ctx.lineTo(len/2 - 5, -wid/2 + 1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-len/2 + 15, wid/2 - 2);
+      ctx.lineTo(len/2 - 5, wid/2 - 1);
+      ctx.stroke();
       // Headlights
       ctx.fillStyle = '#ffeb3b';
       ctx.beginPath();
-      ctx.ellipse(len/2 - 2, -wid/2 + 2, 2.5, 1, 0, 0, Math.PI * 2);
+      ctx.ellipse(len/2 + 2, -wid/2 + 1, 2, 1, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
-      ctx.ellipse(len/2 - 2, wid/2 - 2, 2.5, 1, 0, 0, Math.PI * 2);
+      ctx.ellipse(len/2 + 2, wid/2 - 1, 2, 1, 0, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Windows - curved for realism
+    // Windows - curved for realism, centered
     ctx.fillStyle = '#0a0a0a';
     ctx.beginPath();
-    ctx.ellipse(-len/2 + 10, 0, len * 0.18, wid * 0.35, 0, 0, Math.PI * 2);
+    ctx.ellipse( -len * 0.05 , 0, len * 0.16, wid * 0.32, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Wheels with more realism
+    // Wheels - positioned centered
     ctx.fillStyle = '#111';
-    const off = len * 0.28;
-    ctx.fillRect(-off - 1, -wid/2 - 3, 8, 4);
-    ctx.fillRect(off - 7, -wid/2 - 3, 8, 4);
-    ctx.fillRect(-off - 1, wid/2 - 1, 8, 4);
-    ctx.fillRect(off - 7, wid/2 - 1, 8, 4);
-    // Rims for 3D
-    ctx.fillStyle = '#666';
-    ctx.fillRect(-off, -wid/2 - 2, 4, 2);
-    ctx.fillRect(off - 6, -wid/2 - 2, 4, 2);
+    const off = len * 0.25;
+    ctx.fillRect(-off -1, -wid/2 - 2.5, 7, 4);
+    ctx.fillRect(off -6, -wid/2 - 2.5, 7, 4);
+    ctx.fillRect(-off -1, wid/2 - 1.5, 7, 4);
+    ctx.fillRect(off -6, wid/2 - 1.5, 7, 4);
 
     ctx.restore();
   }
@@ -880,7 +884,7 @@ function startRace() {
 
   // Clean starting grid centered on center line: 2 cars each side (left/right), rows front/back, no overlap, on track
   const laneDist = 22;
-  const rowDist = 38;
+  const rowDist = 60;
 
   const backDirX = -Math.cos(startAngle);
   const backDirY = -Math.sin(startAngle);
@@ -981,19 +985,14 @@ function update(dt) {
     }
   }
 
-  // High-quality camera smoothing using damped spring (frame-rate independent)
-  const look = playerCar.speed * 0.32;
+  // Simple smooth camera follow (frame-rate independent lerp, no spring oscillation)
+  const look = playerCar.speed * 0.25;
   const targetX = playerCar.x - WIDTH / 2 + Math.cos(playerCar.angle) * look;
   const targetY = playerCar.y - HEIGHT / 2 + Math.sin(playerCar.angle) * look;
 
-  const spring = 12;
-  const damping = 0.75;
-
-  camera.vx += (targetX - camera.x) * spring * dt - camera.vx * damping * dt;
-  camera.vy += (targetY - camera.y) * spring * dt - camera.vy * damping * dt;
-
-  camera.x += camera.vx * dt;
-  camera.y += camera.vy * dt;
+  const factor = 1 - Math.exp(-dt * 8);  // adjust 8 for desired smoothness (higher = tighter follow)
+  camera.x += (targetX - camera.x) * factor;
+  camera.y += (targetY - camera.y) * factor;
 
   // Check race end
   if (playerCar.laps >= 3 && !raceFinished) {
@@ -1108,7 +1107,7 @@ function drawTrack(points, camX, camY) {
   ctx.fillStyle = '#555';
   ctx.strokeStyle = '#222';
   const gSize = 26;
-  const rowDistG = 38;
+  const rowDistG = 60;
   const laneDistG = 22;
 
   const dirX = p1.x - p0.x;
@@ -1123,12 +1122,12 @@ function drawTrack(points, camX, camY) {
   const gcX = p0.x - gsdx * 28;
   const gcY = p0.y - gsdy * 28;
 
-  // 2 rows, 2 per side (even each side)
-  const gridLanes = [-1.5, -0.5, 0.5, 1.5]; // positions relative to center, 2 left 2 right
+  // 2 rows, 2 per side (even each side), aligned to car starts
+  const gridLanes = [-1.5, -0.5, 0.5, 1.5];
   for (let r = 0; r < 2; r++) {
     for (let lane of gridLanes) {
-      const gx = gcX - gsdx * (r * rowDistG) + gpx * (lane * laneDistG);
-      const gy = gcY - gsdy * (r * rowDistG) + gpy * (lane * laneDistG);
+      const gx = gcX - gsdx * (r * 38) + gpx * (lane * 22);
+      const gy = gcY - gsdy * (r * 38) + gpy * (lane * 22);
       ctx.fillRect(gx - gSize/2 - camX, gy - gSize/2 - camY, gSize, gSize);
       ctx.strokeRect(gx - gSize/2 - camX, gy - gSize/2 - camY, gSize, gSize);
     }
