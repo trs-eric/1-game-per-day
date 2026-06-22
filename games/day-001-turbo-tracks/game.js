@@ -62,15 +62,15 @@ const COLORS = [
   '#581c87', '#0f766e', '#b45309', '#334155'
 ];
 
-// 7 tracks - large closed loops
+// 7 varied tracks - more distinct layouts
 const TRACKS = [
-  { name: 'Desert Oval', points: generateOval(1200, 950, 720, 480, 22) },
-  { name: 'Chicane Run', points: generateChicaneTrack(1100, 1000, 680, 440) },
-  { name: 'Long Haul', points: generateLongTrack(1300, 1100, 850, 520) },
-  { name: 'S-Bend Circuit', points: generateSBend(1150, 980, 700, 460) },
-  { name: 'Hairpin Hell', points: generateHairpin(1250, 1050, 760, 500) },
-  { name: 'Big Bend', points: generateBigBend(1080, 920, 650, 430) },
-  { name: 'Final Stretch', points: generateFinalTrack(1220, 1020, 740, 490) }
+  { name: 'Desert Oval', points: generateOval(1200, 950, 750, 500, 20) },  // classic big oval
+  { name: 'Chicane Run', points: generateChicaneTrack(1100, 1000, 700, 450) }, // tight chicanes
+  { name: 'Long Haul', points: generateLongTrack(1300, 1100, 900, 550) }, // long straights + turns
+  { name: 'S-Bend Circuit', points: generateSBend(1150, 980, 720, 480) }, // multiple S curves
+  { name: 'Hairpin Hell', points: generateTightHairpins(1250, 1050, 650, 420) }, // sharp hairpins
+  { name: 'Big Bend', points: generateBigBend(1080, 920, 680, 460) }, // wide sweeping + twist
+  { name: 'Final Stretch', points: generateComplexLoop(1220, 1020, 780, 510) }  // mixed complex
 ];
 
 function generateOval(cx, cy, rx, ry, segs) {
@@ -94,34 +94,37 @@ function generateChicaneTrack(cx, cy, rx, ry) {
 
 function generateLongTrack(cx, cy, rx, ry) {
   const pts = [];
-  const segs = 26;
+  const segs = 24;
   for (let i = 0; i < segs; i++) {
     const a = (i / segs) * Math.PI * 2;
-    let r = (i % 4 < 2) ? rx : ry * 0.7;
+    let r = rx;
+    if (i > 5 && i < 10 || i > 17 && i < 22) r *= 0.6; // straights with bends
     pts.push({
-      x: cx + Math.cos(a) * r + (i === 8 || i === 20 ? 120 : 0),
-      y: cy + Math.sin(a) * ry * (0.9 + Math.sin(i) * 0.1)
+      x: cx + Math.cos(a) * r + (i === 6 || i === 18 ? 150 : 0),
+      y: cy + Math.sin(a) * ry * 0.85
     });
   }
   return pts;
 }
 
 function generateSBend(cx, cy, rx, ry) {
-  const pts = generateOval(cx, cy, rx, ry, 18);
-  pts[3].y -= 110; pts[4].y -= 90;
-  pts[5].y -= 40;
-  pts[10].y += 100; pts[11].y += 80;
-  pts[12].y += 30;
+  const pts = generateOval(cx, cy, rx, ry, 20);
+  // Multiple S curves
+  pts[2].x -= 80; pts[3].x -= 120; pts[4].x -= 60;
+  pts[6].y += 90;
+  pts[9].x += 100; pts[10].x += 130; pts[11].x += 70;
+  pts[13].y -= 100;
+  pts[16].x -= 90; pts[17].x -= 110;
   return pts;
 }
 
-function generateHairpin(cx, cy, rx, ry) {
+function generateTightHairpins(cx, cy, rx, ry) {
   const pts = [];
-  const segs = 24;
+  const segs = 28;
   for (let i = 0; i < segs; i++) {
     let a = (i / segs) * Math.PI * 2;
-    let r = rx;
-    if (i > 4 && i < 10) r = ry * 0.55; // tight hairpin
+    let r = rx * (0.7 + Math.sin(i * 1.5) * 0.3);
+    if (i % 7 === 3) r *= 0.4; // tight hairpins
     pts.push({
       x: cx + Math.cos(a) * r,
       y: cy + Math.sin(a) * ry
@@ -131,21 +134,26 @@ function generateHairpin(cx, cy, rx, ry) {
 }
 
 function generateBigBend(cx, cy, rx, ry) {
-  const pts = generateOval(cx, cy, rx, ry, 16);
-  pts[2].x += 140; pts[3].x += 90;
-  pts[8].y += 130; pts[9].y += 70;
+  const pts = generateOval(cx, cy, rx, ry, 18);
+  // Wide sweep + twist
+  pts[1].x += 180; pts[2].x += 220; pts[3].x += 150;
+  pts[5].y -= 80;
+  pts[10].x -= 130; pts[11].x -= 180; pts[12].x -= 100;
+  pts[14].y += 90;
   return pts;
 }
 
-function generateFinalTrack(cx, cy, rx, ry) {
+function generateComplexLoop(cx, cy, rx, ry) {
   const pts = [];
-  const segs = 28;
+  const segs = 30;
   for (let i = 0; i < segs; i++) {
     const a = (i / segs) * Math.PI * 2;
-    let xx = cx + Math.cos(a) * rx;
-    let yy = cy + Math.sin(a) * ry;
-    if (i % 5 === 2) xx += 60;
-    pts.push({ x: xx, y: yy });
+    let r = rx * (0.85 + Math.cos(i * 1.2) * 0.25);
+    if (i > 10 && i < 16) r *= 0.5; // chicane section
+    pts.push({
+      x: cx + Math.cos(a) * r + Math.sin(i) * 40,
+      y: cy + Math.sin(a) * ry * 0.9 + Math.cos(i * 1.5) * 35
+    });
   }
   return pts;
 }
@@ -229,18 +237,18 @@ class Car {
 
     // Lateral (cornering) simulation + high speed slip
     const speedFactor = Math.max(0.4, Math.min(1, Math.abs(newSpeed) / 120));
-    const slipFactor = Math.max(0, (Math.abs(newSpeed) - 100) / 200) * Math.abs(actualSteer) * 1.2;
-    const gripFactor = stats.grip / 5;
+    const slipFactor = Math.max(0, (Math.abs(newSpeed) - 80) / 150) * Math.abs(actualSteer) * 1.5;
 
-    // Apply more slip at high speed turns (realistic skidding/drift)
+    // Apply slip at high speed turns - positional skid only, no hard speed drop
     if (slipFactor > 0.05) {
-      const slipX = -dirY * slipFactor * 30 * dt;
-      const slipY = dirX * slipFactor * 30 * dt;
+      const slipX = -dirY * slipFactor * 40 * dt;
+      const slipY = dirX * slipFactor * 40 * dt;
       this.x += slipX;
       this.y += slipY;
-      newSpeed *= (1 - slipFactor * 0.5); // slow on slip
-      // Add rotational skid
-      this.angle += actualSteer * 0.02 * (newSpeed / 100) * dt;
+      // Minimal speed loss, mostly just slide
+      newSpeed *= (1 - slipFactor * 0.15);
+      // Add rotational skid for more slide
+      this.angle += actualSteer * 0.03 * (newSpeed / 150) * dt;
     }
 
     // Update angle (steering)
@@ -872,31 +880,36 @@ function startRace() {
   const p1 = points[1];
   const startAngle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
 
-  // Starting grid - neatly placed, no overlap, on track, correct direction
-  const gridSpacing = 60;  // much larger spacing
-  const laneWidth = 32;    // wider to fit on track
-  // Position behind start line along track direction
-  const baseX = p0.x - Math.cos(startAngle) * 70;
-  const baseY = p0.y - Math.sin(startAngle) * 70;
+  // Redesigned starting grid: neat, spaced, on track, correct direction
+  // Use larger spacing based on car size (~50 units)
+  const carLength = 50;
+  const spacing = carLength + 15;  // front to back
+  const laneSep = 35;              // side to side
 
-  // Player in pole position
-  const playerX = baseX + Math.cos(startAngle + Math.PI/2) * (laneWidth / 2);
-  const playerY = baseY + Math.sin(startAngle + Math.PI/2) * (laneWidth / 2);
+  // Start positions: behind the line p0, in direction opposite to track
+  const backDirX = -Math.cos(startAngle);
+  const backDirY = -Math.sin(startAngle);
+  const sideDirX = -Math.sin(startAngle);  // perp
+  const sideDirY = Math.cos(startAngle);
+
+  // Player at front, lane 0
+  const playerX = p0.x + backDirX * 10 + sideDirX * (laneSep / 2);
+  const playerY = p0.y + backDirY * 10 + sideDirY * (laneSep / 2);
   playerCar = new Car(playerX, playerY, startAngle, playerColor, selectedModel, true);
 
-  // AI neatly staggered behind in grid
+  // AI cars: staggered grid, 2 lanes, rows behind
   aiCars = [];
-  const offsets = [
-    {ox: -gridSpacing * 1.2, oy: -laneWidth}, 
-    {ox: -gridSpacing * 2.4, oy: laneWidth}, 
-    {ox: -gridSpacing * 3.6, oy: -laneWidth * 0.5}
+  const positions = [
+    {row: 1, lane: -1},  // row1, lane right
+    {row: 2, lane: 1},   // row2, lane left
+    {row: 3, lane: -1}   // row3, lane right
   ];
   for (let i = 0; i < 3; i++) {
+    const pos = positions[i];
     const modelId = (selectedModel + i + 1) % 4;
     const col = COLORS[(i + 3) % COLORS.length];
-    const pos = offsets[i];
-    const ax = baseX + Math.cos(startAngle + Math.PI/2) * pos.oy + Math.cos(startAngle) * pos.ox;
-    const ay = baseY + Math.sin(startAngle + Math.PI/2) * pos.oy + Math.sin(startAngle) * pos.ox;
+    const ax = p0.x + backDirX * (10 + pos.row * spacing) + sideDirX * (pos.lane * laneSep);
+    const ay = p0.y + backDirY * (10 + pos.row * spacing) + sideDirY * (pos.lane * laneSep);
     const ai = new Car(ax, ay, startAngle, col, modelId, false);
     aiCars.push(ai);
   }
@@ -1093,26 +1106,29 @@ function drawTrack(points, camX, camY) {
   ctx.stroke();
 
   // Starting grid squares painted on track (neat grid at start positions)
-  ctx.fillStyle = '#555';
-  const gridSize = 30;
-  const gridRows = 2;
-  const gridCols = 4;
-  // Compute direction locally
-  const dirX = p1.x - p0.x;
-  const dirY = p1.y - p0.y;
-  const len = Math.hypot(dirX, dirY) || 1;
-  const gStartX = p0.x - (dirX / len) * 50;
-  const gStartY = p0.y - (dirY / len) * 50;
-  const perpX = -dirY / len;
-  const perpY = dirX / len;
-  for (let r = 0; r < gridRows; r++) {
-    for (let c = 0; c < gridCols; c++) {
-      const gx = gStartX - c * (gridSize + 5) + (r % 2) * 8 + perpX * (r - 0.5) * 20;
-      const gy = gStartY + r * (gridSize + 3) + perpY * (r - 0.5) * 20;
-      ctx.fillRect(gx - gridSize/2 - camX, gy - gridSize/2 - camY, gridSize, gridSize);
-      ctx.strokeStyle = '#333';
-      ctx.strokeRect(gx - gridSize/2 - camX, gy - gridSize/2 - camY, gridSize, gridSize);
-    }
+  ctx.fillStyle = '#444';
+  ctx.strokeStyle = '#222';
+  const gridSize = 28;
+  const startDirX = p1.x - p0.x;
+  const startDirY = p1.y - p0.y;
+  const sLen = Math.hypot(startDirX, startDirY) || 1;
+  const sdx = startDirX / sLen;
+  const sdy = startDirY / sLen;
+  const pdx = -sdy;  // perp
+  const pdy = sdx;
+
+  // Grid positions relative to p0, behind the line
+  const gridOffsets = [
+    {rx: 0, ry: 0}, {rx: 0, ry: -1}, 
+    {rx: -1, ry: 0.5}, {rx: -1, ry: -1.5},
+    {rx: -2, ry: 0}, {rx: -2, ry: -1},
+    {rx: -3, ry: 0.5}, {rx: -3, ry: -1.5}
+  ];
+  for (let off of gridOffsets) {
+    const gx = p0.x + sdx * (off.rx * 45 - 20) + pdx * (off.ry * 32);
+    const gy = p0.y + sdy * (off.rx * 45 - 20) + pdy * (off.ry * 32);
+    ctx.fillRect(gx - gridSize/2 - camX, gy - gridSize/2 - camY, gridSize, gridSize);
+    ctx.strokeRect(gx - gridSize/2 - camX, gy - gridSize/2 - camY, gridSize, gridSize);
   }
 }
 
