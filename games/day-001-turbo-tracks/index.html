@@ -116,7 +116,38 @@
     <a href="../../" class="back">← Back to all games</a>
   </div>
 
-  <div class="canvas-container">
+  <div id="menu" style="position: absolute; top: 120px; left: 50%; transform: translateX(-50%); background: rgba(10,10,15,0.9); border: 2px solid #22f1ff; border-radius: 8px; padding: 20px; color: white; z-index: 10; max-width: 700px;">
+    <h2 style="margin-top:0; color:#22f1ff;">Select Your Ride</h2>
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:bold; margin-bottom:5px;">Car</div>
+        <div id="car-buttons" style="display:flex; gap:5px;"></div>
+      </div>
+      <div>
+        <div style="font-weight:bold; margin-bottom:5px;">Color</div>
+        <div id="color-buttons" style="display:flex; gap:5px;"></div>
+      </div>
+      <div>
+        <div style="font-weight:bold; margin-bottom:5px;">Track</div>
+        <div id="track-buttons" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <button id="start-button" style="background:#22f1ff; color:black; border:none; padding:10px 20px; font-size:16px; cursor:pointer;">START RACE</button>
+    </div>
+    <div id="previews" style="margin-top:10px; display:flex; gap:10px;">
+      <div>
+        <div>Car Preview</div>
+        <canvas id="car-preview" width="120" height="80" style="border:1px solid #333;"></canvas>
+      </div>
+      <div>
+        <div>Track Preview</div>
+        <canvas id="track-preview" width="120" height="80" style="border:1px solid #333;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="canvas-container" style="position: relative;">
     <canvas id="game" width="800" height="600"></canvas>
   </div>
 
@@ -124,9 +155,10 @@
 
   <div class="info">
     <strong>Controls:</strong> Arrow keys / WASD &nbsp;•&nbsp; Click to interact in menus<br>
-    <small>Complete 3 laps to win. Mouse to select in menus.</small>
+    <small>Complete 3 laps to win.</small>
   </div>
 
+  <script src="three.min.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
