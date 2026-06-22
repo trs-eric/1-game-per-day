@@ -12,9 +12,11 @@ A clean GitHub Pages skeleton for building and publishing one small web game per
 
 ## What This Is
 
-This repo is the **setup only** - no games are included yet.
+This repo contains the skeleton for Eric's "1 Game Per Day" project along with completed games.
 
-You add games yourself (one folder per game). The main page automatically becomes a nice gallery as you add them.
+Games live in `games/`. The root `index.html` is the public gallery.
+
+Currently includes: **Grand Turbo Racing** (day-001).
 
 ## Goals
 
@@ -28,7 +30,6 @@ You add games yourself (one folder per game). The main page automatically become
 ## Development Guidelines
 
 - No size limits - focus on making the best possible games.
-- Always use regular dashes (-) - never em-dashes.
 - When programming game logic, extract pure functions and include unit tests (simple assertions, Node, or browser tests) to verify correctness.
 
 ## Quick Start (local)
@@ -113,43 +114,6 @@ After the first push it may take a minute or two to appear.
 ## Adding More Games Later
 
 Just repeat the "How to Add a Game" steps. Each new folder under `games/` + an entry in the array on the main page = new card in the gallery.
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-Copyright © 2026 Eric Canales
-
----
-
-Ready for your first game.
-
-## Quick Start (for players)
-
-1. Go to the [GitHub Pages site](https://trs-eric.github.io/1-game-per-day/)
-2. Browse the grid
-3. Click **Play** on any game - it opens a self-contained page
-4. Have fun! (Most games support keyboard + mouse/touch)
-
-## Running Locally
-
-```bash
-# Any static server works
-npx serve .
-# or
-python3 -m http.server 8000
-```
-
-Then open http://localhost:8000
-
-## GitHub Pages Setup
-
-1. Push this repo to GitHub.
-2. Go to **Settings → Pages**
-3. Source: **Deploy from a branch** → `main` → `/ (root)`
-4. Save. Your site will be live at `https://trs-eric.github.io/1-game-per-day/`
-
-Optional: add a custom domain later.
 
 ## License
 
