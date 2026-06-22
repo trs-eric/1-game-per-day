@@ -51,10 +51,10 @@ const keys = {};
 
 // Car models (renamed to avoid trademarks)
 const CAR_MODELS = [
-  { id: 0, name: 'Flux GT', maxSpeed: 420, accel: 220, turnRate: 2.8, grip: 5.4, length: 44, width: 18 },
-  { id: 1, name: 'Scarlet GT', maxSpeed: 460, accel: 195, turnRate: 2.3, grip: 4.3, length: 46, width: 17 },
-  { id: 2, name: 'Classic Turbo', maxSpeed: 435, accel: 210, turnRate: 3.1, grip: 5.9, length: 40, width: 19 },
-  { id: 3, name: 'Venom GT', maxSpeed: 450, accel: 235, turnRate: 2.5, grip: 4.9, length: 45, width: 16 },
+  { id: 0, name: 'Flux GT', maxSpeed: 520, accel: 280, turnRate: 3.2, grip: 5.4, length: 44, width: 18 },
+  { id: 1, name: 'Scarlet GT', maxSpeed: 580, accel: 250, turnRate: 2.6, grip: 4.3, length: 46, width: 17 },
+  { id: 2, name: 'Classic Turbo', maxSpeed: 540, accel: 270, turnRate: 3.5, grip: 5.9, length: 40, width: 19 },
+  { id: 3, name: 'Venom GT', maxSpeed: 560, accel: 300, turnRate: 2.8, grip: 4.9, length: 45, width: 16 },
 ];
 
 const COLORS = [
@@ -227,12 +227,21 @@ class Car {
     let newSpeed = forward + accel * dt;
     newSpeed *= 0.985; // rolling resistance + aero drag
 
-    // Lateral (cornering) simulation
-    const lateral = 0; // simplified - we apply through steering only
+    // Lateral (cornering) simulation + high speed slip
+    const speedFactor = Math.max(0.4, Math.min(1, Math.abs(newSpeed) / 120));
+    const slipFactor = Math.max(0, (Math.abs(newSpeed) - 200) / 300) * Math.abs(actualSteer) * 0.6;
     const gripFactor = stats.grip / 5;
 
+    // Apply some slip at high speed turns (more realistic drift)
+    if (slipFactor > 0.05) {
+      const slipX = -dirY * slipFactor * 15 * dt;
+      const slipY = dirX * slipFactor * 15 * dt;
+      this.x += slipX;
+      this.y += slipY;
+      newSpeed *= (1 - slipFactor * 0.4); // slow a bit on slip
+    }
+
     // Update angle (steering)
-    const speedFactor = Math.max(0.4, Math.min(1, Math.abs(newSpeed) / 120));
     this.angle += actualSteer * stats.turnRate * speedFactor * dt * (newSpeed > 0 ? 1 : 0.4);
 
     // Clamp speed
@@ -665,11 +674,11 @@ function drawMenu() {
   ctx.fillStyle = '#22f1ff';
   ctx.font = 'bold 42px Space Grotesk, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('TURBO TRACKS', WIDTH/2, 80);
+  ctx.fillText('GRAND TURBO RACING', WIDTH/2, 80);
 
   ctx.fillStyle = '#fff';
   ctx.font = '18px Inter, sans-serif';
-  ctx.fillText('80s Retro Racer • Top-Down', WIDTH/2, 115);
+  ctx.fillText('RACE TO THE FINISH', WIDTH/2, 115);
 
   // Car selection
   ctx.fillStyle = '#fff';
@@ -731,6 +740,42 @@ function drawMenu() {
     ctx.font = '13px Inter, sans-serif';
     ctx.fillText(`${i+1}. ${track.name}`, 510, y + 19);
   });
+
+  // Track preview (small scaled version of selected track)
+  const tpX = 500;
+  const tpY = 195 + 8 * 32 + 5;
+  const tpW = 240;
+  const tpH = 70;
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(tpX, tpY, tpW, tpH);
+  ctx.fillStyle = '#2e7d32';
+  ctx.fillRect(tpX+1, tpY+1, tpW-2, tpH-2);
+
+  const tpoints = TRACKS[selectedTrackIndex].points;
+  if (tpoints && tpoints.length > 1) {
+    let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+    for (let p of tpoints) {
+      minx = Math.min(minx, p.x); maxx = Math.max(maxx, p.x);
+      miny = Math.min(miny, p.y); maxy = Math.max(maxy, p.y);
+    }
+    const scale = Math.min((tpW - 8) / (maxx - minx), (tpH - 8) / (maxy - miny));
+    const offx = tpX + 4 - minx * scale;
+    const offy = tpY + 4 - miny * scale;
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(offx + tpoints[0].x * scale, offy + tpoints[0].y * scale);
+    for (let p of tpoints) {
+      ctx.lineTo(offx + p.x * scale, offy + p.y * scale);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    // road width hint
+    ctx.strokeStyle = '#777';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+  }
 
   // Preview car (changes with selected model and color) - matches in-game 3D style
   const previewX = WIDTH/2;
@@ -877,6 +922,31 @@ function update(dt) {
     ai.update(dt, 0, 0, 0, currentTrack.points, true);
   });
 
+  // Car-to-car collision (simple push apart)
+  const allCars = [playerCar, ...aiCars];
+  for (let i = 0; i < allCars.length; i++) {
+    for (let j = i + 1; j < allCars.length; j++) {
+      const c1 = allCars[i];
+      const c2 = allCars[j];
+      const dx = c2.x - c1.x;
+      const dy = c2.y - c1.y;
+      const dist = Math.hypot(dx, dy);
+      const minDist = 25;
+      if (dist > 0 && dist < minDist) {
+        const push = (minDist - dist) / 2;
+        const px = dx / dist * push;
+        const py = dy / dist * push;
+        c1.x -= px;
+        c1.y -= py;
+        c2.x += px;
+        c2.y += py;
+        // Slight speed reduction on collision
+        c1.speed *= 0.8;
+        c2.speed *= 0.8;
+      }
+    }
+  }
+
   // High-quality camera smoothing using damped spring (frame-rate independent)
   const look = playerCar.speed * 0.32;
   const targetX = playerCar.x - WIDTH / 2 + Math.cos(playerCar.angle) * look;
@@ -999,6 +1069,23 @@ function drawTrack(points, camX, camY) {
   ctx.moveTo(mx - 42, my - 42);
   ctx.lineTo(mx + 42, my + 42);
   ctx.stroke();
+
+  // Starting grid squares painted on track
+  ctx.fillStyle = '#666';
+  const gridSize = 22;
+  const gridRows = 2;
+  const gridCols = 3;
+  const gridStartX = mx - 30;
+  const gridStartY = my - 30;
+  for (let r = 0; r < gridRows; r++) {
+    for (let c = 0; c < gridCols; c++) {
+      const gx = gridStartX - c * (gridSize + 4) + (r % 2) * (gridSize / 2);
+      const gy = gridStartY + r * (gridSize + 2);
+      ctx.fillRect(gx - gridSize/2, gy - gridSize/2, gridSize, gridSize);
+      ctx.strokeStyle = '#444';
+      ctx.strokeRect(gx - gridSize/2, gy - gridSize/2, gridSize, gridSize);
+    }
+  }
 }
 
 function drawHUD() {
