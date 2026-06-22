@@ -82,10 +82,10 @@ let particles = [];
 // Physics (tuned for quick responsive action)
 const GRAV = 0.82;
 const MAX_VY = 13;
-const MOVE_ACC = 0.55;
-const AIR_ACC = 0.30;
+const MOVE_ACC = 0.40;
+const AIR_ACC = 0.22;
 const FRICTION = 0.82;
-const MAX_VX = 3.8;
+const MAX_VX = 2.5;
 const NORMAL_JUMP = -11.4;
 const MAX_SUPER = 10.2;
 
@@ -299,7 +299,7 @@ function update(dt) {
   if (!ctrlHeld && wasCtrl && charge > 0.04) {
     const boost = NORMAL_JUMP - (charge * MAX_SUPER);
     player.vy = boost;
-    player.vx += player.facing * (0.8 + charge * 1.5);
+    player.vx += player.facing * (0.5 + charge * 1.0);
     player.onGround = false;
     spawnParticles(player.x + player.w / 2, player.y + player.h, 7 + Math.floor(charge * 6), '#ffeb3b');
     spawnParticles(player.x + player.w / 2, player.y + player.h + 2, 4, '#f4a261');
@@ -331,20 +331,14 @@ function update(dt) {
     return;
   }
 
-  // Prevent going too far behind (allow some left movement for platforming feel)
-  if (player.x < camX - 40) {
-    player.x = camX - 40;
-    // only kill left velocity if not actively pressing left
-    if (player.vx < 0 && !left) player.vx = 0;
-  }
-
   // Animation
   player.anim += (Math.abs(player.vx) > 0.8 ? 0.19 : 0.06) * frameScale;
   if (!player.onGround) player.anim += 0.04 * frameScale;
 
-  // Camera follow (forward bias, quick action)
+  // Camera follow: only scroll right (standard for side-scrolling runners/platformers).
+  // This makes left/right actually move the cat left/right *on screen*.
   const targetCam = player.x - 240;
-  camX = camX * 0.4 + targetCam * 0.6;
+  camX = Math.max(camX, targetCam);
   if (camX < 0) camX = 0;
 
   // Generate + cull
