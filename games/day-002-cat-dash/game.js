@@ -69,8 +69,8 @@ let player = {
   y: 310,
   vx: 0,
   vy: 0,
-  w: 22,
-  h: 18,
+  w: 28,
+  h: 20,
   facing: 1,
   anim: 0,
   onGround: false
@@ -82,10 +82,10 @@ let particles = [];
 // Physics (tuned for quick responsive action)
 const GRAV = 0.82;
 const MAX_VY = 13;
-const MOVE_ACC = 0.48;
-const AIR_ACC = 0.26;
+const MOVE_ACC = 0.55;
+const AIR_ACC = 0.30;
 const FRICTION = 0.82;
-const MAX_VX = 3.1;
+const MAX_VX = 3.8;
 const NORMAL_JUMP = -11.4;
 const MAX_SUPER = 10.2;
 
@@ -94,6 +94,8 @@ function resetGameObjects() {
   player.y = 310;
   player.vx = 0;
   player.vy = 0;
+  player.w = 28;
+  player.h = 20;
   player.facing = 1;
   player.anim = 0;
   player.onGround = false;
@@ -247,6 +249,8 @@ function update(dt) {
   let right = keys['arrowright'] || keys['d'];
   let ctrlHeld = keys['control'];
 
+  let horizInput = false;
+
   // charge super or stop
   if (ctrlHeld) {
     player.vx *= 0.38;
@@ -256,24 +260,30 @@ function update(dt) {
     let acc = player.onGround ? MOVE_ACC : AIR_ACC;
     if (left) {
       player.vx -= acc * frameScale;
-      player.facing = -1;
+      horizInput = true;
     }
     if (right) {
       player.vx += acc * frameScale;
-      player.facing = 1;
+      horizInput = true;
     }
   }
 
-  // Apply friction / drag
+  // Apply friction / drag ONLY when no horizontal input (so holding L/R accelerates properly to max speed)
   if (player.onGround) {
-    player.vx *= Math.pow(FRICTION, frameScale);
+    if (!horizInput) {
+      player.vx *= Math.pow(FRICTION, frameScale);
+    }
   } else {
     player.vx *= 0.965;
   }
   player.vx = Math.max(-MAX_VX, Math.min(MAX_VX, player.vx));
 
-  // Ensure facing always matches actual travel direction (prevents visual "wrong way" bugs)
-  if (Math.abs(player.vx) > 0.1) {
+  // Set facing immediately from input for responsive turn, fallback to vx
+  if (left) {
+    player.facing = -1;
+  } else if (right) {
+    player.facing = 1;
+  } else if (Math.abs(player.vx) > 0.1) {
     player.facing = player.vx > 0 ? 1 : -1;
   }
 
@@ -322,9 +332,10 @@ function update(dt) {
   }
 
   // Prevent going too far behind (allow some left movement for platforming feel)
-  if (player.x < camX - 20) {
-    player.x = camX - 20;
-    player.vx = Math.max(0, player.vx * 0.3);
+  if (player.x < camX - 30) {
+    player.x = camX - 30;
+    // do not force vx positive here; let player control direction
+    if (player.vx < 0) player.vx = 0;
   }
 
   // Animation
@@ -386,11 +397,12 @@ function respawnLevel() {
 function drawPixelCat(sx, sy, facing, anim, onGround, charging) {
   const s = 2.0; // pixel scale
   ctx.save();
-  ctx.translate(Math.floor(sx), Math.floor(sy));
-  if (facing < 0) ctx.scale(-1, 1);
 
-  // Center the sprite visually around collision box for correct flip feel (prevents "backwards" look on turn)
-  ctx.translate(-4, 0);
+  // Center flip around middle of collision box so sprite doesn't jump sideways on turn.
+  const centerOffset = 14;  // half of w=28
+  ctx.translate(Math.floor(sx + centerOffset), Math.floor(sy));
+  ctx.translate(-6, 0);  // fine tune to keep original art proportions centered
+  if (facing < 0) ctx.scale(-1, 1);
 
   const crouch = charging ? 2.5 : 0;
   const bob = onGround ? Math.sin(anim * 1.6) * 0.8 : 0;
