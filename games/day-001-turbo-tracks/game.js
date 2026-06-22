@@ -51,10 +51,10 @@ const keys = {};
 
 // Car models (renamed to avoid trademarks)
 const CAR_MODELS = [
-  { id: 0, name: 'Flux GT', maxSpeed: 520, accel: 280, turnRate: 3.2, grip: 5.4, length: 44, width: 18 },
-  { id: 1, name: 'Scarlet GT', maxSpeed: 580, accel: 250, turnRate: 2.6, grip: 4.3, length: 46, width: 17 },
-  { id: 2, name: 'Classic Turbo', maxSpeed: 540, accel: 270, turnRate: 3.5, grip: 5.9, length: 40, width: 19 },
-  { id: 3, name: 'Venom GT', maxSpeed: 560, accel: 300, turnRate: 2.8, grip: 4.9, length: 45, width: 16 },
+  { id: 0, name: 'Flux GT', maxSpeed: 1040, accel: 560, turnRate: 3.2, grip: 5.4, length: 44, width: 18 },
+  { id: 1, name: 'Scarlet GT', maxSpeed: 1160, accel: 500, turnRate: 2.6, grip: 4.3, length: 46, width: 17 },
+  { id: 2, name: 'Classic Turbo', maxSpeed: 1080, accel: 540, turnRate: 3.5, grip: 5.9, length: 40, width: 19 },
+  { id: 3, name: 'Venom GT', maxSpeed: 1120, accel: 600, turnRate: 2.8, grip: 4.9, length: 45, width: 16 },
 ];
 
 const COLORS = [
@@ -229,16 +229,18 @@ class Car {
 
     // Lateral (cornering) simulation + high speed slip
     const speedFactor = Math.max(0.4, Math.min(1, Math.abs(newSpeed) / 120));
-    const slipFactor = Math.max(0, (Math.abs(newSpeed) - 200) / 300) * Math.abs(actualSteer) * 0.6;
+    const slipFactor = Math.max(0, (Math.abs(newSpeed) - 100) / 200) * Math.abs(actualSteer) * 1.2;
     const gripFactor = stats.grip / 5;
 
-    // Apply some slip at high speed turns (more realistic drift)
+    // Apply more slip at high speed turns (realistic skidding/drift)
     if (slipFactor > 0.05) {
-      const slipX = -dirY * slipFactor * 15 * dt;
-      const slipY = dirX * slipFactor * 15 * dt;
+      const slipX = -dirY * slipFactor * 30 * dt;
+      const slipY = dirX * slipFactor * 30 * dt;
       this.x += slipX;
       this.y += slipY;
-      newSpeed *= (1 - slipFactor * 0.4); // slow a bit on slip
+      newSpeed *= (1 - slipFactor * 0.5); // slow on slip
+      // Add rotational skid
+      this.angle += actualSteer * 0.02 * (newSpeed / 100) * dt;
     }
 
     // Update angle (steering)
@@ -291,105 +293,122 @@ class Car {
     const wid = stats.width || 18;
     const color = this.color;
 
-    // Shadow for 3D pop
+    // Shadow
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(-len/2 + 3, -wid/2 + 2, len, wid);
+    ctx.fillRect(-len/2 + 2, -wid/2 + 1, len + 2, wid + 2);
 
-    // Main body - base
-    ctx.fillStyle = color;
-    ctx.fillRect(-len/2, -wid/2, len, wid);
-
-    // 3D shading: darker bottom/right for depth
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillRect(-len/2, -wid/2 + wid*0.5, len, wid*0.5);
-
-    // Lighter top for highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.fillRect(-len/2, -wid/2, len, wid*0.3);
-
-    if (this.modelId === 0) { // Flux GT - DeLorean style: boxy, doors
-      ctx.fillStyle = '#222';
-      ctx.fillRect(-len/2 + 4, -wid/2 + 3, len-8, wid-6);
-      // Door lines for boxy look
-      ctx.strokeStyle = '#111';
-      ctx.lineWidth = 1.5;
+    if (this.modelId === 0) { // Flux GT - DeLorean: boxy with curves hint
+      ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.rect(-len/2 + 6, -wid/2 + 4, 10, wid-8);
-      ctx.rect(-len/2 + 18, -wid/2 + 4, 10, wid-8);
-      ctx.stroke();
-      // Rear window box
-      ctx.fillRect(-len/2 + 2, -wid/2 + 5, 8, wid-10);
-    } else if (this.modelId === 1) { // Scarlet GT - Testarossa: long wedge
-      ctx.fillStyle = '#222';
-      ctx.fillRect(-len/2 + 5, -wid/2 + 2, len-12, wid-4);
-      // Side strakes
-      ctx.strokeStyle = '#444';
-      ctx.lineWidth = 1;
-      for (let s = 0; s < 3; s++) {
-        ctx.beginPath();
-        ctx.moveTo(-len/2 + 10 + s*6, -wid/2 + 2);
-        ctx.lineTo(-len/2 + 18 + s*6, wid/2 - 2);
-        ctx.stroke();
-      }
-      // Sharp front
-      ctx.fillStyle = '#111';
-      ctx.beginPath();
-      ctx.moveTo(len/2 - 2, -wid/2);
-      ctx.lineTo(len/2 + 6, 0);
-      ctx.lineTo(len/2 - 2, wid/2);
+      ctx.rect(-len/2, -wid/2, len, wid);
       ctx.fill();
-    } else if (this.modelId === 2) { // Classic Turbo - Porsche 911 style
-      ctx.fillStyle = '#222';
-      ctx.fillRect(-len/2 + 6, -wid/2 + 3, len-10, wid-6);
-      // Rear spoiler line
-      ctx.fillStyle = '#111';
-      ctx.fillRect(-len/2 + 2, -wid/2 + 2, 8, 4);
-      ctx.fillRect(-len/2 + 2, wid/2 - 6, 8, 4);
-      // Classic rounded roof
+      // Rounded corners for realism
       ctx.beginPath();
-      ctx.ellipse(-2, 0, 10, wid/2 - 2, 0, 0, Math.PI * 2);
+      ctx.moveTo(-len/2 + 3, -wid/2);
+      ctx.lineTo(len/2 - 3, -wid/2);
+      ctx.quadraticCurveTo(len/2, -wid/2 + 2, len/2, -wid/2 + 5);
+      ctx.lineTo(len/2, wid/2 - 5);
+      ctx.quadraticCurveTo(len/2, wid/2 - 2, len/2 - 3, wid/2);
+      ctx.lineTo(-len/2 + 3, wid/2);
+      ctx.quadraticCurveTo(-len/2, wid/2 - 2, -len/2, wid/2 - 5);
+      ctx.lineTo(-len/2, -wid/2 + 5);
+      ctx.quadraticCurveTo(-len/2, -wid/2 + 2, -len/2 + 3, -wid/2);
       ctx.fill();
-    } else { // Venom GT - Viper: long aggressive
-      ctx.fillStyle = '#222';
-      ctx.fillRect(-len/2 + 4, -wid/2 + 2, len-8, wid-4);
-      // Long hood
-      ctx.fillStyle = '#111';
-      ctx.fillRect(-len/2 + 10, -wid/2 + 3, len*0.45, wid-6);
+      // Doors
+      ctx.fillStyle = '#333';
+      ctx.fillRect(-len/2 + 5, -wid/2 + 2, 12, wid - 4);
+      ctx.fillRect(-len/2 + 20, -wid/2 + 2, 12, wid - 4);
+      // Headlights realistic
+      ctx.fillStyle = '#ffeb3b';
+      ctx.fillRect(len/2 - 8, -wid/2 + 2, 5, 3);
+      ctx.fillRect(len/2 - 8, wid/2 - 5, 5, 3);
+    } else if (this.modelId === 1) { // Scarlet GT - Testarossa: long low wedge with curves
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(-len/2, -wid/2 + 2);
+      ctx.lineTo(len/2 - 10, -wid/2);
+      ctx.quadraticCurveTo(len/2, -wid/2 + 1, len/2, 0);
+      ctx.quadraticCurveTo(len/2, wid/2 - 1, len/2 - 10, wid/2);
+      ctx.lineTo(-len/2, wid/2 - 2);
+      ctx.quadraticCurveTo(-len/2 + 5, wid/2 - 2, -len/2, wid/2 - 5);
+      ctx.lineTo(-len/2, -wid/2 + 5);
+      ctx.quadraticCurveTo(-len/2 + 5, -wid/2 + 2, -len/2, -wid/2 + 2);
+      ctx.fill();
       // Side vents
-      ctx.fillRect(len/2 - 12, -wid/2 + 3, 4, 2);
-      ctx.fillRect(len/2 - 12, wid/2 - 5, 4, 2);
+      ctx.fillStyle = '#222';
+      ctx.fillRect(-len/2 + 15, -wid/2 + 1, 8, 3);
+      ctx.fillRect(-len/2 + 15, wid/2 - 4, 8, 3);
+      // Headlights
+      ctx.fillStyle = '#ffeb3b';
+      ctx.beginPath();
+      ctx.ellipse(len/2 - 5, -wid/2 + 3, 3, 1.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(len/2 - 5, wid/2 - 3, 3, 1.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this.modelId === 2) { // Classic Turbo - Porsche 911: curved body
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(-len/2 + 5, -wid/2);
+      ctx.quadraticCurveTo(len/2 - 5, -wid/2 - 2, len/2, -wid/2 + 3);
+      ctx.quadraticCurveTo(len/2 + 2, 0, len/2, wid/2 - 3);
+      ctx.quadraticCurveTo(len/2 - 5, wid/2 + 2, -len/2 + 5, wid/2);
+      ctx.quadraticCurveTo(-len/2 - 2, 0, -len/2 + 5, -wid/2);
+      ctx.fill();
+      // Spoiler
+      ctx.fillStyle = '#222';
+      ctx.fillRect(-len/2 + 2, -wid/2 - 1, 6, 2);
+      ctx.fillRect(-len/2 + 2, wid/2 - 1, 6, 2);
+      // Headlights
+      ctx.fillStyle = '#ffeb3b';
+      ctx.fillRect(len/2 - 6, -wid/2 + 2, 4, 3);
+      ctx.fillRect(len/2 - 6, wid/2 - 5, 4, 3);
+    } else { // Venom GT - Viper: long curved aggressive
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(-len/2, -wid/2 + 1);
+      ctx.quadraticCurveTo(len/2 - 5, -wid/2, len/2 + 5, 0);
+      ctx.quadraticCurveTo(len/2 - 5, wid/2, -len/2, wid/2 - 1);
+      ctx.closePath();
+      ctx.fill();
+      // Long hood curve
+      ctx.fillStyle = '#222';
+      ctx.beginPath();
+      ctx.moveTo(-len/2 + 5, -wid/2 + 2);
+      ctx.quadraticCurveTo(len/2 - 8, -wid/2 + 1, len/2, 0);
+      ctx.quadraticCurveTo(len/2 - 8, wid/2 - 1, -len/2 + 5, wid/2 - 2);
+      ctx.fill();
+      // Side exhausts
+      ctx.fillStyle = '#444';
+      ctx.fillRect(len/2 - 15, -wid/2 + 3, 10, 2);
+      ctx.fillRect(len/2 - 15, wid/2 - 5, 10, 2);
+      // Headlights
+      ctx.fillStyle = '#ffeb3b';
+      ctx.beginPath();
+      ctx.ellipse(len/2 - 2, -wid/2 + 2, 2.5, 1, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(len/2 - 2, wid/2 - 2, 2.5, 1, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    // Windshield / windows - 3D inset
+    // Windows - curved for realism
     ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(-len/2 + 8, -wid/2 + 3.5, len * 0.32, wid - 7);
+    ctx.beginPath();
+    ctx.ellipse(-len/2 + 10, 0, len * 0.18, wid * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Headlights (distinct per model)
-    ctx.fillStyle = '#ffeb3b';
-    if (this.modelId === 1) { // pop-up style for Testarossa
-      ctx.fillRect(len/2 - 3, -wid/2 + 1, 4, 2);
-      ctx.fillRect(len/2 - 3, wid/2 - 3, 4, 2);
-    } else {
-      ctx.fillRect(len/2 - 5, -wid/2 + 2, 4, 3);
-      ctx.fillRect(len/2 - 5, wid/2 - 5, 4, 3);
-    }
-
-    // Wheels - 3D with rims
+    // Wheels with more realism
     ctx.fillStyle = '#111';
-    const wheelW = 7;
-    const wheelH = 3.5;
     const off = len * 0.28;
-    // Left wheels
-    ctx.fillRect(-off, -wid/2 - 2, wheelW, wheelH);
-    ctx.fillRect(off - wheelW + 1, -wid/2 - 2, wheelW, wheelH);
-    // Right wheels
-    ctx.fillRect(-off, wid/2 - wheelH + 2, wheelW, wheelH);
-    ctx.fillRect(off - wheelW + 1, wid/2 - wheelH + 2, wheelW, wheelH);
-
-    // Wheel highlights for 3D
-    ctx.fillStyle = '#444';
-    ctx.fillRect(-off + 1, -wid/2 - 1, wheelW - 2, 1);
-    ctx.fillRect(off - wheelW + 2, -wid/2 - 1, wheelW - 2, 1);
+    ctx.fillRect(-off - 1, -wid/2 - 3, 8, 4);
+    ctx.fillRect(off - 7, -wid/2 - 3, 8, 4);
+    ctx.fillRect(-off - 1, wid/2 - 1, 8, 4);
+    ctx.fillRect(off - 7, wid/2 - 1, 8, 4);
+    // Rims for 3D
+    ctx.fillStyle = '#666';
+    ctx.fillRect(-off, -wid/2 - 2, 4, 2);
+    ctx.fillRect(off - 6, -wid/2 - 2, 4, 2);
 
     ctx.restore();
   }
@@ -853,28 +872,31 @@ function startRace() {
   const p1 = points[1];
   const startAngle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
 
-  // Starting grid - player in pole, staggered behind
-  const gridSpacing = 28;
-  const laneOffset = 16;
-  const startX = p0.x - Math.cos(startAngle) * 35;
-  const startY = p0.y - Math.sin(startAngle) * 35;
+  // Starting grid - neatly placed, no overlap, on track, correct direction
+  const gridSpacing = 60;  // much larger spacing
+  const laneWidth = 32;    // wider to fit on track
+  // Position behind start line along track direction
+  const baseX = p0.x - Math.cos(startAngle) * 70;
+  const baseY = p0.y - Math.sin(startAngle) * 70;
 
-  // Player (pole position)
-  playerCar = new Car(startX, startY, startAngle, playerColor, selectedModel, true);
+  // Player in pole position
+  const playerX = baseX + Math.cos(startAngle + Math.PI/2) * (laneWidth / 2);
+  const playerY = baseY + Math.sin(startAngle + Math.PI/2) * (laneWidth / 2);
+  playerCar = new Car(playerX, playerY, startAngle, playerColor, selectedModel, true);
 
-  // AI in grid formation (2x2-ish behind)
+  // AI neatly staggered behind in grid
   aiCars = [];
-  const aiPositions = [
-    {ox: -gridSpacing, oy: -laneOffset},   // inside
-    {ox: -gridSpacing * 2, oy: laneOffset}, // outside
-    {ox: -gridSpacing * 3, oy: -laneOffset * 0.7}
+  const offsets = [
+    {ox: -gridSpacing * 1.2, oy: -laneWidth}, 
+    {ox: -gridSpacing * 2.4, oy: laneWidth}, 
+    {ox: -gridSpacing * 3.6, oy: -laneWidth * 0.5}
   ];
   for (let i = 0; i < 3; i++) {
     const modelId = (selectedModel + i + 1) % 4;
     const col = COLORS[(i + 3) % COLORS.length];
-    const pos = aiPositions[i];
-    const ax = startX + Math.cos(startAngle) * pos.ox - Math.sin(startAngle) * pos.oy;
-    const ay = startY + Math.sin(startAngle) * pos.ox + Math.cos(startAngle) * pos.oy;
+    const pos = offsets[i];
+    const ax = baseX + Math.cos(startAngle + Math.PI/2) * pos.oy + Math.cos(startAngle) * pos.ox;
+    const ay = baseY + Math.sin(startAngle + Math.PI/2) * pos.oy + Math.sin(startAngle) * pos.ox;
     const ai = new Car(ax, ay, startAngle, col, modelId, false);
     aiCars.push(ai);
   }
@@ -1070,20 +1092,26 @@ function drawTrack(points, camX, camY) {
   ctx.lineTo(mx + 42, my + 42);
   ctx.stroke();
 
-  // Starting grid squares painted on track
-  ctx.fillStyle = '#666';
-  const gridSize = 22;
+  // Starting grid squares painted on track (neat grid at start positions)
+  ctx.fillStyle = '#555';
+  const gridSize = 30;
   const gridRows = 2;
-  const gridCols = 3;
-  const gridStartX = mx - 30;
-  const gridStartY = my - 30;
+  const gridCols = 4;
+  // Compute direction locally
+  const dirX = p1.x - p0.x;
+  const dirY = p1.y - p0.y;
+  const len = Math.hypot(dirX, dirY) || 1;
+  const gStartX = p0.x - (dirX / len) * 50;
+  const gStartY = p0.y - (dirY / len) * 50;
+  const perpX = -dirY / len;
+  const perpY = dirX / len;
   for (let r = 0; r < gridRows; r++) {
     for (let c = 0; c < gridCols; c++) {
-      const gx = gridStartX - c * (gridSize + 4) + (r % 2) * (gridSize / 2);
-      const gy = gridStartY + r * (gridSize + 2);
-      ctx.fillRect(gx - gridSize/2, gy - gridSize/2, gridSize, gridSize);
-      ctx.strokeStyle = '#444';
-      ctx.strokeRect(gx - gridSize/2, gy - gridSize/2, gridSize, gridSize);
+      const gx = gStartX - c * (gridSize + 5) + (r % 2) * 8 + perpX * (r - 0.5) * 20;
+      const gy = gStartY + r * (gridSize + 3) + perpY * (r - 0.5) * 20;
+      ctx.fillRect(gx - gridSize/2 - camX, gy - gridSize/2 - camY, gridSize, gridSize);
+      ctx.strokeStyle = '#333';
+      ctx.strokeRect(gx - gridSize/2 - camX, gy - gridSize/2 - camY, gridSize, gridSize);
     }
   }
 }
