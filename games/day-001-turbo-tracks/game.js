@@ -280,49 +280,107 @@ class Car {
     const stats = this.getStats();
     const len = stats.length || 42;
     const wid = stats.width || 18;
+    const color = this.color;
 
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(-len/2 + 2, -wid/2 + 1, len, wid);
+    // Shadow for 3D pop
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(-len/2 + 3, -wid/2 + 2, len, wid);
 
-    // Body
-    ctx.fillStyle = this.color;
+    // Main body - base
+    ctx.fillStyle = color;
     ctx.fillRect(-len/2, -wid/2, len, wid);
 
-    // Model-specific details
-    ctx.fillStyle = '#222';
-    if (this.modelId === 0) { // Flux GT - boxy
-      ctx.fillRect(-len/2 + 5, -wid/2 + 2, len-10, wid-4);
-    } else if (this.modelId === 1) { // Scarlet GT - wedge
-      ctx.fillRect(-len/2 + 8, -wid/2 + 3, len-18, wid-6);
+    // 3D shading: darker bottom/right for depth
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(-len/2, -wid/2 + wid*0.5, len, wid*0.5);
+
+    // Lighter top for highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(-len/2, -wid/2, len, wid*0.3);
+
+    if (this.modelId === 0) { // Flux GT - DeLorean style: boxy, doors
+      ctx.fillStyle = '#222';
+      ctx.fillRect(-len/2 + 4, -wid/2 + 3, len-8, wid-6);
+      // Door lines for boxy look
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.rect(-len/2 + 6, -wid/2 + 4, 10, wid-8);
+      ctx.rect(-len/2 + 18, -wid/2 + 4, 10, wid-8);
+      ctx.stroke();
+      // Rear window box
+      ctx.fillRect(-len/2 + 2, -wid/2 + 5, 8, wid-10);
+    } else if (this.modelId === 1) { // Scarlet GT - Testarossa: long wedge
+      ctx.fillStyle = '#222';
+      ctx.fillRect(-len/2 + 5, -wid/2 + 2, len-12, wid-4);
+      // Side strakes
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 1;
+      for (let s = 0; s < 3; s++) {
+        ctx.beginPath();
+        ctx.moveTo(-len/2 + 10 + s*6, -wid/2 + 2);
+        ctx.lineTo(-len/2 + 18 + s*6, wid/2 - 2);
+        ctx.stroke();
+      }
+      // Sharp front
+      ctx.fillStyle = '#111';
       ctx.beginPath();
       ctx.moveTo(len/2 - 2, -wid/2);
-      ctx.lineTo(len/2 + 4, 0);
+      ctx.lineTo(len/2 + 6, 0);
       ctx.lineTo(len/2 - 2, wid/2);
       ctx.fill();
-    } else if (this.modelId === 2) { // Classic Turbo - rounded feel
+    } else if (this.modelId === 2) { // Classic Turbo - Porsche 911 style
+      ctx.fillStyle = '#222';
+      ctx.fillRect(-len/2 + 6, -wid/2 + 3, len-10, wid-6);
+      // Rear spoiler line
+      ctx.fillStyle = '#111';
+      ctx.fillRect(-len/2 + 2, -wid/2 + 2, 8, 4);
+      ctx.fillRect(-len/2 + 2, wid/2 - 6, 8, 4);
+      // Classic rounded roof
+      ctx.beginPath();
+      ctx.ellipse(-2, 0, 10, wid/2 - 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else { // Venom GT - Viper: long aggressive
+      ctx.fillStyle = '#222';
       ctx.fillRect(-len/2 + 4, -wid/2 + 2, len-8, wid-4);
-    } else { // Venom GT - aggressive
-      ctx.fillRect(-len/2 + 6, -wid/2 + 1, len-12, wid-2);
-      ctx.fillRect(len/2 - 8, -wid/2 + 4, 5, wid-8);
+      // Long hood
+      ctx.fillStyle = '#111';
+      ctx.fillRect(-len/2 + 10, -wid/2 + 3, len*0.45, wid-6);
+      // Side vents
+      ctx.fillRect(len/2 - 12, -wid/2 + 3, 4, 2);
+      ctx.fillRect(len/2 - 12, wid/2 - 5, 4, 2);
     }
 
-    // Windows
-    ctx.fillStyle = '#111';
-    ctx.fillRect(-len/2 + 7, -wid/2 + 3, len * 0.35, wid - 6);
+    // Windshield / windows - 3D inset
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(-len/2 + 8, -wid/2 + 3.5, len * 0.32, wid - 7);
 
-    // Headlights
+    // Headlights (distinct per model)
     ctx.fillStyle = '#ffeb3b';
-    ctx.fillRect(len/2 - 4, -wid/2 + 2, 3, 3);
-    ctx.fillRect(len/2 - 4, wid/2 - 5, 3, 3);
+    if (this.modelId === 1) { // pop-up style for Testarossa
+      ctx.fillRect(len/2 - 3, -wid/2 + 1, 4, 2);
+      ctx.fillRect(len/2 - 3, wid/2 - 3, 4, 2);
+    } else {
+      ctx.fillRect(len/2 - 5, -wid/2 + 2, 4, 3);
+      ctx.fillRect(len/2 - 5, wid/2 - 5, 4, 3);
+    }
 
-    // Wheels
-    ctx.fillStyle = '#1a1a1a';
-    const wheelOffset = len * 0.3;
-    ctx.fillRect(-wheelOffset, -wid/2 - 2, 6, 3);
-    ctx.fillRect(wheelOffset - 6, -wid/2 - 2, 6, 3);
-    ctx.fillRect(-wheelOffset, wid/2 - 1, 6, 3);
-    ctx.fillRect(wheelOffset - 6, wid/2 - 1, 6, 3);
+    // Wheels - 3D with rims
+    ctx.fillStyle = '#111';
+    const wheelW = 7;
+    const wheelH = 3.5;
+    const off = len * 0.28;
+    // Left wheels
+    ctx.fillRect(-off, -wid/2 - 2, wheelW, wheelH);
+    ctx.fillRect(off - wheelW + 1, -wid/2 - 2, wheelW, wheelH);
+    // Right wheels
+    ctx.fillRect(-off, wid/2 - wheelH + 2, wheelW, wheelH);
+    ctx.fillRect(off - wheelW + 1, wid/2 - wheelH + 2, wheelW, wheelH);
+
+    // Wheel highlights for 3D
+    ctx.fillStyle = '#444';
+    ctx.fillRect(-off + 1, -wid/2 - 1, wheelW - 2, 1);
+    ctx.fillRect(off - wheelW + 2, -wid/2 - 1, wheelW - 2, 1);
 
     ctx.restore();
   }
@@ -453,7 +511,10 @@ function initAudio() {
 }
 
 function updateAudio() {
-  if (!audioCtx || !playerCar) return;
+  if (!audioCtx || !playerCar || gameState !== 'racing' || raceFinished) {
+    stopAudio();
+    return;
+  }
 
   // Engine sound
   if (engineGain && engineOsc) {
@@ -504,8 +565,77 @@ function playLapSound() {
 }
 
 function stopAudio() {
-  if (engineGain) engineGain.gain.value = 0;
-  if (skidGain) skidGain.gain.value = 0;
+  if (engineGain) {
+    engineGain.gain.linearRampToValueAtTime(0.001, audioCtx ? audioCtx.currentTime + 0.3 : 0);
+  }
+  if (skidGain) {
+    skidGain.gain.value = 0;
+  }
+  // Also ramp engine osc freq down
+  if (engineOsc && audioCtx) {
+    engineOsc.frequency.linearRampToValueAtTime(20, audioCtx.currentTime + 0.4);
+  }
+}
+
+function playCheer() {
+  if (!audioCtx) return;
+  try {
+    // Simulate crowd cheer with multiple short noise bursts and tones
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => {
+        const noise = audioCtx.createBufferSource();
+        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.8, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let j = 0; j < data.length; j++) {
+          data[j] = Math.random() * 2 - 1;
+        }
+        noise.buffer = buffer;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 800 + i * 50;
+        filter.Q.value = 1;
+
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.15;
+
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.4;
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+
+        noise.start();
+        setTimeout(() => {
+          gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+          setTimeout(() => noise.stop(), 700);
+        }, 50);
+      }, i * 120);
+    }
+
+    // Add some high tones for excitement
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 1200 + i * 200;
+
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.2;
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        setTimeout(() => {
+          gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+          setTimeout(() => osc.stop(), 600);
+        }, 100);
+      }, i * 180);
+    }
+  } catch(e){}
 }
 
 function init() {
@@ -602,32 +732,43 @@ function drawMenu() {
     ctx.fillText(`${i+1}. ${track.name}`, 510, y + 19);
   });
 
-  // Preview car (changes with selected model and color)
+  // Preview car (changes with selected model and color) - matches in-game 3D style
   const previewX = WIDTH/2;
   const previewY = 420;
   ctx.save();
   ctx.translate(previewX, previewY);
   ctx.scale(2.2, 2.2);
   ctx.rotate(0.25);
-  const previewModel = CAR_MODELS[selectedCarIndex];
-  const pLen = previewModel.length || 42;
-  const pWid = previewModel.width || 18;
-  ctx.fillStyle = COLORS[selectedColorIndex];
+  const pm = CAR_MODELS[selectedCarIndex];
+  const pLen = pm.length || 42;
+  const pWid = pm.width || 18;
+  const pColor = COLORS[selectedColorIndex];
+
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(-pLen/2 + 2, -pWid/2 + 1, pLen, pWid);
+  ctx.fillStyle = pColor;
   ctx.fillRect(-pLen/2, -pWid/2, pLen, pWid);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(-pLen/2, -pWid/2 + pWid*0.55, pLen, pWid*0.45);
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.fillRect(-pLen/2, -pWid/2, pLen, pWid*0.25);
+
   ctx.fillStyle = '#222';
-  ctx.fillRect(-pLen/2 + 5, -pWid/2 + 2, pLen-10, pWid-4);
-  ctx.fillStyle = '#111';
-  ctx.fillRect(-pLen/2 + 4, -pWid/2 + 3, pLen * 0.32, pWid - 6);
-  // headlights
+  if (selectedCarIndex === 0) ctx.fillRect(-pLen/2 + 4, -pWid/2 + 2, pLen-8, pWid-4);
+  else if (selectedCarIndex === 1) ctx.fillRect(-pLen/2 + 6, -pWid/2 + 2, pLen-14, pWid-4);
+  else ctx.fillRect(-pLen/2 + 5, -pWid/2 + 2, pLen-9, pWid-4);
+
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(-pLen/2 + 6, -pWid/2 + 3, pLen*0.3, pWid-6);
   ctx.fillStyle = '#ffeb3b';
-  ctx.fillRect(pLen/2 - 5, -pWid/2 + 2, 2, 2);
-  ctx.fillRect(pLen/2 - 5, pWid/2 - 4, 2, 2);
-  // wheels
+  ctx.fillRect(pLen/2 - 4, -pWid/2 + 2, 2, 2);
+  ctx.fillRect(pLen/2 - 4, pWid/2 - 4, 2, 2);
+
   ctx.fillStyle = '#1a1a1a';
   ctx.fillRect(-pLen*0.28, -pWid/2 - 2, 5, 2);
   ctx.fillRect(pLen*0.18, -pWid/2 - 2, 5, 2);
-  ctx.fillRect(-pLen*0.28, pWid/2 , 5, 2);
-  ctx.fillRect(pLen*0.18, pWid/2 , 5, 2);
+  ctx.fillRect(-pLen*0.28, pWid/2, 5, 2);
+  ctx.fillRect(pLen*0.18, pWid/2, 5, 2);
   ctx.restore();
 
   // Start button
@@ -916,6 +1057,7 @@ function endRace() {
 
   gameState = 'results';
   stopAudio();
+  playCheer();
 }
 
 function drawResults() {
