@@ -116,44 +116,15 @@
     <a href="../../" class="back">← Back to all games</a>
   </div>
 
-  <div id="menu" style="width: 100%; max-width: 800px; margin-bottom: 20px;">
-    <h3 style="margin: 0 0 12px 0; font-size: 1.1rem;">Choose Your Ride</h3>
-    
-    <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
-      <div>
-        <div style="font-size: 0.8rem; color: #888; margin-bottom: 4px;">CAR MODEL</div>
-        <div id="car-select" style="display: flex; gap: 8px;"></div>
-      </div>
-      
-      <div>
-        <div style="font-size: 0.8rem; color: #888; margin-bottom: 4px;">COLOR</div>
-        <div id="color-select" style="display: flex; gap: 6px; align-items: center;"></div>
-      </div>
-    </div>
-
-    <div style="margin-bottom: 16px;">
-      <div style="font-size: 0.8rem; color: #888; margin-bottom: 4px;">TRACK (7 available)</div>
-      <div id="track-select" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
-    </div>
-
-    <button id="start-btn" class="primary" style="padding: 12px 28px; font-size: 1rem;">START RACE</button>
-  </div>
-
-  <div class="canvas-container" id="game-container" style="display: none;">
+  <div class="canvas-container">
     <canvas id="game" width="800" height="600"></canvas>
   </div>
 
-  <div class="ui" id="game-ui" style="display: none;">
-    <div style="margin-left:auto; display:flex; gap:12px; align-items:center;">
-      <div id="lap" class="status">LAP 1/3</div>
-      <div id="time" class="status">TIME 0:00.00</div>
-      <div id="speed" class="status">SPEED 0</div>
-    </div>
-  </div>
+  <div class="ui" style="display:none;"></div>
 
   <div class="info">
-    <strong>Controls:</strong> Arrow keys or WASD &nbsp;•&nbsp; Up/W = Accelerate &nbsp;•&nbsp; Down/S = Brake &nbsp;•&nbsp; Left/Right or A/D = Steer<br>
-    <small>Top-down racer with realistic physics. Complete 3 laps to win!</small>
+    <strong>Controls:</strong> Arrow keys / WASD &nbsp;•&nbsp; Click to interact in menus<br>
+    <small>Top-down racer. 3 laps to win. Mouse to select in menus.</small>
   </div>
 
   <script src="game.js"></script>

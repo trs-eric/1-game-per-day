@@ -17,7 +17,7 @@ const ctx = canvas.getContext('2d');
 const WIDTH = 800;
 const HEIGHT = 600;
 
-let gameState = 'menu';
+let gameState = 'menu'; // menu | racing | results
 let playerCar = null;
 let aiCars = [];
 let currentTrack = null;
@@ -28,14 +28,27 @@ let startTime = 0;
 let raceFinished = false;
 let results = [];
 
+// Menu selection state (for in-canvas arcade UI)
+let menuMouse = { x: 0, y: 0, down: false };
+let selectedCarIndex = 0;
+let selectedColorIndex = 0;
+let selectedTrackIndex = 0;
+
+// Audio
+let audioCtx = null;
+let engineOsc = null;
+let engineGain = null;
+let skidNoise = null;
+let skidGain = null;
+
 const keys = {};
 
 // Car models (renamed to avoid trademarks)
 const CAR_MODELS = [
-  { id: 0, name: 'Flux GT', maxSpeed: 265, accel: 135, turnRate: 2.1, grip: 5.4 },
-  { id: 1, name: 'Scarlet GT', maxSpeed: 295, accel: 118, turnRate: 1.75, grip: 4.3 },
-  { id: 2, name: 'Classic Turbo', maxSpeed: 278, accel: 128, turnRate: 2.4, grip: 5.9 },
-  { id: 3, name: 'Venom GT', maxSpeed: 282, accel: 148, turnRate: 1.85, grip: 4.9 },
+  { id: 0, name: 'Flux GT', maxSpeed: 340, accel: 175, turnRate: 2.1, grip: 5.4 },
+  { id: 1, name: 'Scarlet GT', maxSpeed: 380, accel: 155, turnRate: 1.75, grip: 4.3 },
+  { id: 2, name: 'Classic Turbo', maxSpeed: 355, accel: 165, turnRate: 2.4, grip: 5.9 },
+  { id: 3, name: 'Venom GT', maxSpeed: 365, accel: 190, turnRate: 1.85, grip: 4.9 },
 ];
 
 const COLORS = [
@@ -243,6 +256,9 @@ class Car {
       this.currentWaypoint = (this.currentWaypoint + 1) % points.length;
       if (this.currentWaypoint === 0) {
         this.laps++;
+        if (this.isPlayer) {
+          playLapSound();
+        }
       }
     }
   }
@@ -284,74 +300,326 @@ class Car {
   }
 }
 
-let camera = { x: 0, y: 0 };
+let camera = { x: 0, y: 0, vx: 0, vy: 0 };
 let lastTime = 0;
 
+function handleCanvasClick(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  if (gameState === 'menu') {
+    // Car selection
+    const carStartY = 195;
+    for (let i = 0; i < CAR_MODELS.length; i++) {
+      const y = carStartY + i * 38;
+      if (mx > 60 && mx < 280 && my > y && my < y + 32) {
+        selectedCarIndex = i;
+        return;
+      }
+    }
+
+    // Color selection
+    for (let i = 0; i < COLORS.length; i++) {
+      const x = 320 + (i % 4) * 38;
+      const y = 195 + Math.floor(i / 4) * 38;
+      if (mx > x && mx < x + 32 && my > y && my < y + 32) {
+        selectedColorIndex = i;
+        return;
+      }
+    }
+
+    // Track selection
+    for (let i = 0; i < TRACKS.length; i++) {
+      const y = 195 + i * 32;
+      if (mx > 500 && mx < 740 && my > y && my < y + 28) {
+        selectedTrackIndex = i;
+        return;
+      }
+    }
+
+    // Start button
+    const startX = WIDTH/2 - 120;
+    const startY = 520;
+    if (mx > startX && mx < startX + 240 && my > startY && my < startY + 50) {
+      startRace();
+    }
+    return;
+  }
+
+  if (gameState === 'results') {
+    const btnY = HEIGHT - 130;
+
+    // Race again
+    if (mx > WIDTH/2 - 180 && mx < WIDTH/2 - 20 && my > btnY && my < btnY + 42) {
+      startRace();
+      return;
+    }
+
+    // Change setup (back to menu)
+    if (mx > WIDTH/2 + 20 && mx < WIDTH/2 + 180 && my > btnY && my < btnY + 42) {
+      gameState = 'menu';
+      return;
+    }
+  }
+}
+
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Engine tone (low osc + slight modulation)
+    engineOsc = audioCtx.createOscillator();
+    engineOsc.type = 'sawtooth';
+    engineOsc.frequency.value = 40;
+
+    const engineFilter = audioCtx.createBiquadFilter();
+    engineFilter.type = 'lowpass';
+    engineFilter.frequency.value = 600;
+
+    engineGain = audioCtx.createGain();
+    engineGain.gain.value = 0.0;
+
+    const engineVol = audioCtx.createGain();
+    engineVol.gain.value = 0.25;
+
+    engineOsc.connect(engineFilter);
+    engineFilter.connect(engineGain);
+    engineGain.connect(engineVol);
+    engineVol.connect(audioCtx.destination);
+
+    engineOsc.start();
+
+    // Skid noise
+    skidNoise = audioCtx.createBufferSource();
+    const bufferSize = audioCtx.sampleRate * 2;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    skidNoise.buffer = buffer;
+    skidNoise.loop = true;
+
+    const skidFilter = audioCtx.createBiquadFilter();
+    skidFilter.type = 'bandpass';
+    skidFilter.frequency.value = 800;
+    skidFilter.Q.value = 2;
+
+    skidGain = audioCtx.createGain();
+    skidGain.gain.value = 0;
+
+    const skidVol = audioCtx.createGain();
+    skidVol.gain.value = 0.15;
+
+    skidNoise.connect(skidFilter);
+    skidFilter.connect(skidGain);
+    skidGain.connect(skidVol);
+    skidVol.connect(audioCtx.destination);
+
+    skidNoise.start();
+  } catch (e) {
+    console.warn('Audio not available');
+  }
+}
+
+function updateAudio() {
+  if (!audioCtx || !playerCar) return;
+
+  // Engine sound
+  if (engineGain && engineOsc) {
+    const speedNorm = Math.abs(playerCar.speed) / 380;
+    engineOsc.frequency.value = 35 + speedNorm * 65;
+    engineGain.gain.value = 0.15 + speedNorm * 0.35;
+  }
+
+  // Skid sound when off road or drifting
+  if (skidGain) {
+    const dist = getMinDistanceToTrack(playerCar.x, playerCar.y, currentTrack.points);
+    const isSkidding = dist > 55 || (Math.abs(playerCar.speed) > 80 && Math.abs(steerInputFromKeys()) > 0.3);
+    const target = isSkidding ? 0.6 : 0;
+    skidGain.gain.value = skidGain.gain.value * 0.7 + target * 0.3;
+  }
+}
+
+function steerInputFromKeys() {
+  let s = 0;
+  if (keys['arrowleft'] || keys['a']) s -= 1;
+  if (keys['arrowright'] || keys['d']) s += 1;
+  return s;
+}
+
+function playLapSound() {
+  if (!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.value = 0.3;
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1200;
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    setTimeout(() => {
+      gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      setTimeout(() => osc.stop(), 500);
+    }, 80);
+  } catch(e){}
+}
+
+function stopAudio() {
+  if (engineGain) engineGain.gain.value = 0;
+  if (skidGain) skidGain.gain.value = 0;
+}
+
 function init() {
-  setupMenu();
+  selectedCarIndex = 0;
+  selectedColorIndex = 0;
+  selectedTrackIndex = 0;
+
+  // Canvas-based arcade menu
+  canvas.addEventListener('mousedown', handleCanvasClick);
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    menuMouse.x = e.clientX - rect.left;
+    menuMouse.y = e.clientY - rect.top;
+  });
+
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
   requestAnimationFrame(gameLoop);
 }
 
-function setupMenu() {
-  // Car models
-  const carContainer = document.getElementById('car-select');
-  carContainer.innerHTML = '';
-  CAR_MODELS.forEach((model, idx) => {
-    const btn = document.createElement('button');
-    btn.textContent = model.name;
-    btn.style.padding = '6px 12px';
-    btn.style.fontSize = '0.85rem';
-    if (idx === selectedModel) btn.style.border = '2px solid #22f1ff';
-    btn.onclick = () => {
-      selectedModel = idx;
-      setupMenu(); // refresh highlights
-    };
-    carContainer.appendChild(btn);
+// Arcade-style in-canvas menu
+function drawMenu() {
+  ctx.fillStyle = '#0a0a0f';
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  // Title
+  ctx.fillStyle = '#22f1ff';
+  ctx.font = 'bold 42px Space Grotesk, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('TURBO TRACKS', WIDTH/2, 80);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '18px Inter, sans-serif';
+  ctx.fillText('80s Retro Racer • Top-Down', WIDTH/2, 115);
+
+  // Car selection
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px Inter, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('CHOOSE CAR', 60, 170);
+
+  const carStartY = 195;
+  CAR_MODELS.forEach((model, i) => {
+    const y = carStartY + i * 38;
+    const isSelected = i === selectedCarIndex;
+
+    // Box
+    ctx.fillStyle = isSelected ? '#22f1ff' : '#1f1f1f';
+    ctx.fillRect(60, y, 220, 32);
+    ctx.strokeStyle = isSelected ? '#fff' : '#444';
+    ctx.strokeRect(60, y, 220, 32);
+
+    ctx.fillStyle = isSelected ? '#000' : '#fff';
+    ctx.font = '14px Inter, sans-serif';
+    ctx.fillText(model.name, 72, y + 21);
   });
 
-  // Colors
-  const colorContainer = document.getElementById('color-select');
-  colorContainer.innerHTML = '';
-  COLORS.forEach(col => {
-    const swatch = document.createElement('div');
-    swatch.style.width = '26px';
-    swatch.style.height = '26px';
-    swatch.style.backgroundColor = col;
-    swatch.style.borderRadius = '4px';
-    swatch.style.border = col === playerColor ? '3px solid #22f1ff' : '2px solid #555';
-    swatch.style.cursor = 'pointer';
-    swatch.onclick = () => {
-      playerColor = col;
-      setupMenu();
-    };
-    colorContainer.appendChild(swatch);
+  // Color selection
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px Inter, sans-serif';
+  ctx.fillText('COLOR', 320, 170);
+
+  COLORS.forEach((col, i) => {
+    const x = 320 + (i % 4) * 38;
+    const y = 195 + Math.floor(i / 4) * 38;
+    const isSelected = i === selectedColorIndex;
+
+    ctx.fillStyle = col;
+    ctx.fillRect(x, y, 32, 32);
+    if (isSelected) {
+      ctx.strokeStyle = '#22f1ff';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, 32, 32);
+      ctx.lineWidth = 1;
+    }
   });
 
-  // Tracks
-  const trackContainer = document.getElementById('track-select');
-  trackContainer.innerHTML = '';
-  TRACKS.forEach((track, idx) => {
-    const btn = document.createElement('button');
-    btn.textContent = `${idx + 1}. ${track.name}`;
-    btn.style.fontSize = '0.75rem';
-    btn.style.padding = '4px 8px';
-    if (idx === trackIndex) btn.style.border = '2px solid #22f1ff';
-    btn.onclick = () => {
-      trackIndex = idx;
-      setupMenu();
-    };
-    trackContainer.appendChild(btn);
+  // Track selection
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px Inter, sans-serif';
+  ctx.fillText('TRACKS', 500, 170);
+
+  TRACKS.forEach((track, i) => {
+    const y = 195 + i * 32;
+    const isSelected = i === selectedTrackIndex;
+
+    ctx.fillStyle = isSelected ? '#22f1ff' : '#1f1f1f';
+    ctx.fillRect(500, y, 240, 28);
+    ctx.strokeStyle = isSelected ? '#fff' : '#444';
+    ctx.strokeRect(500, y, 240, 28);
+
+    ctx.fillStyle = isSelected ? '#000' : '#fff';
+    ctx.font = '13px Inter, sans-serif';
+    ctx.fillText(`${i+1}. ${track.name}`, 510, y + 19);
   });
 
-  document.getElementById('start-btn').onclick = startRace;
+  // Preview car
+  const previewX = WIDTH/2;
+  const previewY = 420;
+  ctx.save();
+  ctx.translate(previewX, previewY);
+  ctx.scale(2, 2);
+  ctx.rotate(0.3);
+  ctx.fillStyle = COLORS[selectedColorIndex];
+  ctx.fillRect(-21, -9, 42, 18);
+  ctx.fillStyle = '#222';
+  ctx.fillRect(-13, -5, 20, 10);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(-18, -10, 6, 4);
+  ctx.fillRect(-18, 6, 6, 4);
+  ctx.fillRect(10, -10, 6, 4);
+  ctx.fillRect(10, 6, 6, 4);
+  ctx.restore();
+
+  // Start button
+  const startX = WIDTH/2 - 120;
+  const startY = 520;
+  const startW = 240;
+  const startH = 50;
+
+  const hover = menuMouse.x > startX && menuMouse.x < startX+startW && menuMouse.y > startY && menuMouse.y < startY+startH;
+
+  ctx.fillStyle = hover ? '#fff' : '#22f1ff';
+  ctx.fillRect(startX, startY, startW, startH);
+  ctx.fillStyle = hover ? '#000' : '#000';
+  ctx.font = 'bold 20px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('START RACE', startX + startW/2, startY + 33);
+
+  ctx.textAlign = 'left';
 }
 
 function startRace() {
-  document.getElementById('menu').style.display = 'none';
-  document.getElementById('game-container').style.display = 'block';
-  document.getElementById('game-ui').style.display = 'flex';
+  // Use canvas menu selections
+  selectedModel = selectedCarIndex;
+  playerColor = COLORS[selectedColorIndex];
+  trackIndex = selectedTrackIndex;
+
+  initAudio();
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
 
   currentTrack = TRACKS[trackIndex];
 
@@ -378,11 +646,14 @@ function startRace() {
 
   camera.x = playerCar.x - 400;
   camera.y = playerCar.y - 300;
+  camera.vx = 0;
+  camera.vy = 0;
 
   gameState = 'racing';
   lastTime = performance.now();
 
-  requestAnimationFrame(gameLoop);
+  // Start sounds
+  initAudio();
 }
 
 function update(dt) {
@@ -405,13 +676,19 @@ function update(dt) {
     ai.update(dt, 0, 0, 0, currentTrack.points, true);
   });
 
-  // Camera follow with lookahead
-  const look = playerCar.speed * 0.28;
+  // High-quality camera smoothing using damped spring (frame-rate independent)
+  const look = playerCar.speed * 0.32;
   const targetX = playerCar.x - WIDTH / 2 + Math.cos(playerCar.angle) * look;
   const targetY = playerCar.y - HEIGHT / 2 + Math.sin(playerCar.angle) * look;
 
-  camera.x += (targetX - camera.x) * 0.09;
-  camera.y += (targetY - camera.y) * 0.09;
+  const spring = 12;
+  const damping = 0.75;
+
+  camera.vx += (targetX - camera.x) * spring * dt - camera.vx * damping * dt;
+  camera.vy += (targetY - camera.y) * spring * dt - camera.vy * damping * dt;
+
+  camera.x += camera.vx * dt;
+  camera.y += camera.vy * dt;
 
   // Check race end
   if (playerCar.laps >= 3 && !raceFinished) {
@@ -420,6 +697,11 @@ function update(dt) {
 }
 
 function draw() {
+  if (gameState === 'menu') {
+    drawMenu();
+    return;
+  }
+
   // Grass background
   ctx.fillStyle = '#2e7d32';
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -439,6 +721,10 @@ function draw() {
   // HUD
   if (gameState === 'racing') {
     drawHUD();
+  }
+
+  if (gameState === 'results') {
+    drawResults();
   }
 }
 
@@ -496,24 +782,20 @@ function drawTrack(points, camX, camY) {
 }
 
 function drawHUD() {
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillRect(12, 12, 180, 82);
+  ctx.fillStyle = 'rgba(0,0,0,0.65)';
+  ctx.fillRect(12, 12, 200, 70);
 
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 15px Inter, sans-serif';
-  ctx.fillText(`LAP ${Math.min(playerCar.laps + 1, 3)} / 3`, 22, 32);
+  ctx.fillStyle = '#22f1ff';
+  ctx.font = 'bold 14px Inter, sans-serif';
+  ctx.fillText(`LAP ${Math.min(playerCar.laps + 1, 3)}/3`, 20, 28);
 
   const elapsed = (performance.now() - startTime) / 1000;
   const mins = Math.floor(elapsed / 60);
   const secs = (elapsed % 60).toFixed(2).padStart(4, '0');
-  ctx.fillText(`TIME  ${mins}:${secs}`, 22, 52);
+  ctx.fillText(`TIME  ${mins}:${secs}`, 20, 46);
 
-  ctx.fillText(`SPEED  ${Math.round(Math.abs(playerCar.speed))}`, 22, 72);
-
-  // Mini position indicator
-  if (raceFinished) return;
-  ctx.fillStyle = '#22f1ff';
-  ctx.fillText('LEADING', 140, 32);
+  ctx.fillStyle = '#fff';
+  ctx.fillText(`SPEED ${Math.round(Math.abs(playerCar.speed))}`, 20, 64);
 }
 
 function endRace() {
@@ -538,66 +820,61 @@ function endRace() {
   // Sort
   results.sort((a, b) => a.time - b.time);
 
-  setTimeout(() => {
-    showResults();
-  }, 800);
+  gameState = 'results';
+  stopAudio();
 }
 
-function showResults() {
-  const container = document.getElementById('game-container');
-  const ui = document.getElementById('game-ui');
-  container.style.display = 'none';
-  ui.style.display = 'none';
+function drawResults() {
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillRect(120, 80, WIDTH - 240, HEIGHT - 160);
 
-  const resultsDiv = document.createElement('div');
-  resultsDiv.style.cssText = 'position:absolute; background:#111; border:1px solid #333; border-radius:12px; padding:20px 28px; max-width:420px; color:white; font-family:Inter, sans-serif; box-shadow:0 10px 30px rgba(0,0,0,0.6)';
-  resultsDiv.innerHTML = `
-    <h2 style="margin-top:0; color:#22f1ff">Race Complete</h2>
-    <p style="margin:4px 0 16px 0; color:#aaa">3 Laps • ${TRACKS[trackIndex].name}</p>
-    <ol style="padding-left:20px; margin:0 0 20px 0; line-height:1.7">
-      ${results.map((r, i) => {
-        const t = r.time;
-        const m = Math.floor(t / 60);
-        const s = (t % 60).toFixed(2).padStart(4, '0');
-        return `<li style="margin-bottom:4px">${r.name} <span style="float:right; color:#aaa">${m}:${s}</span></li>`;
-      }).join('')}
-    </ol>
-    <button onclick="restartRace()" style="background:#22f1ff;color:black;border:none;padding:10px 22px;border-radius:999px;font-weight:600;margin-right:8px;cursor:pointer">Race Again</button>
-    <button onclick="backToMenu()" style="background:#222;color:white;border:1px solid #444;padding:10px 18px;border-radius:999px;cursor:pointer">Change Setup</button>
-  `;
-  document.body.appendChild(resultsDiv);
+  ctx.strokeStyle = '#22f1ff';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(120, 80, WIDTH - 240, HEIGHT - 160);
 
-  // Position it
-  resultsDiv.style.left = '50%';
-  resultsDiv.style.top = '50%';
-  resultsDiv.style.transform = 'translate(-50%, -50%)';
+  ctx.fillStyle = '#22f1ff';
+  ctx.font = 'bold 32px Space Grotesk, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('RACE COMPLETE', WIDTH/2, 130);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px Inter, sans-serif';
+  ctx.fillText(`3 Laps • ${currentTrack.name}`, WIDTH/2, 160);
+
+  // Results list
+  ctx.textAlign = 'left';
+  let y = 210;
+  results.forEach((r, i) => {
+    const t = r.time;
+    const m = Math.floor(t / 60);
+    const s = (t % 60).toFixed(2).padStart(4, '0');
+    const timeStr = `${m}:${s}`;
+    const text = `${i+1}. ${r.name}`;
+    ctx.fillStyle = r.isPlayer ? '#22f1ff' : '#fff';
+    ctx.fillText(text, 160, y);
+    ctx.fillText(timeStr, 520, y);
+    y += 32;
+  });
+
+  // Buttons
+  ctx.textAlign = 'center';
+  const btnY = HEIGHT - 130;
+
+  // Restart
+  ctx.fillStyle = '#22f1ff';
+  ctx.fillRect(WIDTH/2 - 180, btnY, 160, 42);
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold 16px Inter, sans-serif';
+  ctx.fillText('RACE AGAIN', WIDTH/2 - 100, btnY + 27);
+
+  // Back to menu
+  ctx.fillStyle = '#333';
+  ctx.fillRect(WIDTH/2 + 20, btnY, 160, 42);
+  ctx.fillStyle = '#fff';
+  ctx.fillText('CHANGE SETUP', WIDTH/2 + 100, btnY + 27);
 }
 
-function restartRace() {
-  document.querySelectorAll('body > div[style*="position:absolute"]').forEach(el => el.remove());
-  document.getElementById('game-container').style.display = 'block';
-  document.getElementById('game-ui').style.display = 'flex';
-  startRace();
-}
 
-function backToMenu() {
-  document.querySelectorAll('body > div[style*="position:absolute"]').forEach(el => el.remove());
-  document.getElementById('game-container').style.display = 'none';
-  document.getElementById('game-ui').style.display = 'none';
-  document.getElementById('menu').style.display = 'block';
-  setupMenu();
-  gameState = 'menu';
-}
-
-function updateHUD() {
-  if (!playerCar || gameState !== 'racing') return;
-  document.getElementById('lap').textContent = `LAP ${Math.min(playerCar.laps + 1, 3)}/3`;
-  const t = (performance.now() - startTime) / 1000;
-  const m = Math.floor(t / 60);
-  const s = (t % 60).toFixed(2).padStart(4, '0');
-  document.getElementById('time').textContent = `TIME ${m}:${s}`;
-  document.getElementById('speed').textContent = `SPEED ${Math.round(Math.abs(playerCar.speed))}`;
-}
 
 function gameLoop(timestamp = performance.now()) {
   if (gameState === 'racing') {
@@ -605,13 +882,12 @@ function gameLoop(timestamp = performance.now()) {
     lastTime = timestamp;
 
     update(dt);
+    updateAudio();
     draw();
-  } else {
-    // Menu state - static background or simple animation
-    ctx.fillStyle = '#0a0a0f';
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    ctx.fillStyle = '#333';
-    ctx.fillText('Select options above and hit START RACE', 220, 280);
+  } else if (gameState === 'menu') {
+    drawMenu();
+  } else if (gameState === 'results') {
+    draw();
   }
 
   requestAnimationFrame(gameLoop);
