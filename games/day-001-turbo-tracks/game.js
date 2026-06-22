@@ -28,6 +28,12 @@ let startTime = 0;
 let raceFinished = false;
 let results = [];
 
+// Timing
+let lapStartTime = 0;
+let currentLapTime = 0;
+let bestLapTime = Infinity;
+let totalRaceTime = 0;
+
 // Menu selection state (for in-canvas arcade UI)
 let menuMouse = { x: 0, y: 0, down: false };
 let selectedCarIndex = 0;
@@ -45,10 +51,10 @@ const keys = {};
 
 // Car models (renamed to avoid trademarks)
 const CAR_MODELS = [
-  { id: 0, name: 'Flux GT', maxSpeed: 340, accel: 175, turnRate: 2.1, grip: 5.4 },
-  { id: 1, name: 'Scarlet GT', maxSpeed: 380, accel: 155, turnRate: 1.75, grip: 4.3 },
-  { id: 2, name: 'Classic Turbo', maxSpeed: 355, accel: 165, turnRate: 2.4, grip: 5.9 },
-  { id: 3, name: 'Venom GT', maxSpeed: 365, accel: 190, turnRate: 1.85, grip: 4.9 },
+  { id: 0, name: 'Flux GT', maxSpeed: 420, accel: 220, turnRate: 2.8, grip: 5.4, length: 44, width: 18 },
+  { id: 1, name: 'Scarlet GT', maxSpeed: 460, accel: 195, turnRate: 2.3, grip: 4.3, length: 46, width: 17 },
+  { id: 2, name: 'Classic Turbo', maxSpeed: 435, accel: 210, turnRate: 3.1, grip: 5.9, length: 40, width: 19 },
+  { id: 3, name: 'Venom GT', maxSpeed: 450, accel: 235, turnRate: 2.5, grip: 4.9, length: 45, width: 16 },
 ];
 
 const COLORS = [
@@ -258,6 +264,9 @@ class Car {
         this.laps++;
         if (this.isPlayer) {
           playLapSound();
+          const lapTime = (performance.now() - lapStartTime) / 1000;
+          if (lapTime < bestLapTime) bestLapTime = lapTime;
+          lapStartTime = performance.now();
         }
       }
     }
@@ -269,32 +278,51 @@ class Car {
     ctx.rotate(this.angle);
 
     const stats = this.getStats();
-    const len = 42 + (stats.maxSpeed - 270) * 0.1;
-    const wid = 19;
+    const len = stats.length || 42;
+    const wid = stats.width || 18;
 
     // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.fillRect(-len/2 + 3, -wid/2 + 2, len, wid);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(-len/2 + 2, -wid/2 + 1, len, wid);
 
     // Body
     ctx.fillStyle = this.color;
     ctx.fillRect(-len/2, -wid/2, len, wid);
 
-    // Windows
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(-len/2 + 8, -wid/2 + 3, len - 16, wid - 6);
+    // Model-specific details
+    ctx.fillStyle = '#222';
+    if (this.modelId === 0) { // Flux GT - boxy
+      ctx.fillRect(-len/2 + 5, -wid/2 + 2, len-10, wid-4);
+    } else if (this.modelId === 1) { // Scarlet GT - wedge
+      ctx.fillRect(-len/2 + 8, -wid/2 + 3, len-18, wid-6);
+      ctx.beginPath();
+      ctx.moveTo(len/2 - 2, -wid/2);
+      ctx.lineTo(len/2 + 4, 0);
+      ctx.lineTo(len/2 - 2, wid/2);
+      ctx.fill();
+    } else if (this.modelId === 2) { // Classic Turbo - rounded feel
+      ctx.fillRect(-len/2 + 4, -wid/2 + 2, len-8, wid-4);
+    } else { // Venom GT - aggressive
+      ctx.fillRect(-len/2 + 6, -wid/2 + 1, len-12, wid-2);
+      ctx.fillRect(len/2 - 8, -wid/2 + 4, 5, wid-8);
+    }
 
-    // Headlights / details
-    ctx.fillStyle = '#facc15';
-    ctx.fillRect(len/2 - 5, -wid/2 + 3, 3, 4);
-    ctx.fillRect(len/2 - 5, wid/2 - 7, 3, 4);
+    // Windows
+    ctx.fillStyle = '#111';
+    ctx.fillRect(-len/2 + 7, -wid/2 + 3, len * 0.35, wid - 6);
+
+    // Headlights
+    ctx.fillStyle = '#ffeb3b';
+    ctx.fillRect(len/2 - 4, -wid/2 + 2, 3, 3);
+    ctx.fillRect(len/2 - 4, wid/2 - 5, 3, 3);
 
     // Wheels
-    ctx.fillStyle = '#111';
-    ctx.fillRect(-len/2 + 5, -wid/2 - 3, 7, 3);
-    ctx.fillRect(-len/2 + 5, wid/2 , 7, 3);
-    ctx.fillRect(len/2 - 12, -wid/2 - 3, 7, 3);
-    ctx.fillRect(len/2 - 12, wid/2 , 7, 3);
+    ctx.fillStyle = '#1a1a1a';
+    const wheelOffset = len * 0.3;
+    ctx.fillRect(-wheelOffset, -wid/2 - 2, 6, 3);
+    ctx.fillRect(wheelOffset - 6, -wid/2 - 2, 6, 3);
+    ctx.fillRect(-wheelOffset, wid/2 - 1, 6, 3);
+    ctx.fillRect(wheelOffset - 6, wid/2 - 1, 6, 3);
 
     ctx.restore();
   }
@@ -574,22 +602,32 @@ function drawMenu() {
     ctx.fillText(`${i+1}. ${track.name}`, 510, y + 19);
   });
 
-  // Preview car
+  // Preview car (changes with selected model and color)
   const previewX = WIDTH/2;
   const previewY = 420;
   ctx.save();
   ctx.translate(previewX, previewY);
-  ctx.scale(2, 2);
-  ctx.rotate(0.3);
+  ctx.scale(2.2, 2.2);
+  ctx.rotate(0.25);
+  const previewModel = CAR_MODELS[selectedCarIndex];
+  const pLen = previewModel.length || 42;
+  const pWid = previewModel.width || 18;
   ctx.fillStyle = COLORS[selectedColorIndex];
-  ctx.fillRect(-21, -9, 42, 18);
+  ctx.fillRect(-pLen/2, -pWid/2, pLen, pWid);
   ctx.fillStyle = '#222';
-  ctx.fillRect(-13, -5, 20, 10);
+  ctx.fillRect(-pLen/2 + 5, -pWid/2 + 2, pLen-10, pWid-4);
   ctx.fillStyle = '#111';
-  ctx.fillRect(-18, -10, 6, 4);
-  ctx.fillRect(-18, 6, 6, 4);
-  ctx.fillRect(10, -10, 6, 4);
-  ctx.fillRect(10, 6, 6, 4);
+  ctx.fillRect(-pLen/2 + 4, -pWid/2 + 3, pLen * 0.32, pWid - 6);
+  // headlights
+  ctx.fillStyle = '#ffeb3b';
+  ctx.fillRect(pLen/2 - 5, -pWid/2 + 2, 2, 2);
+  ctx.fillRect(pLen/2 - 5, pWid/2 - 4, 2, 2);
+  // wheels
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(-pLen*0.28, -pWid/2 - 2, 5, 2);
+  ctx.fillRect(pLen*0.18, -pWid/2 - 2, 5, 2);
+  ctx.fillRect(-pLen*0.28, pWid/2 , 5, 2);
+  ctx.fillRect(pLen*0.18, pWid/2 , 5, 2);
   ctx.restore();
 
   // Start button
@@ -622,18 +660,36 @@ function startRace() {
   }
 
   currentTrack = TRACKS[trackIndex];
+  const points = currentTrack.points;
 
-  // Start position
-  const start = currentTrack.points[0];
-  playerCar = new Car(start.x + 15, start.y - 25, 0.02, playerColor, selectedModel, true);
+  // Calculate starting direction from track
+  const p0 = points[0];
+  const p1 = points[1];
+  const startAngle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
 
-  // AI cars
+  // Starting grid - player in pole, staggered behind
+  const gridSpacing = 28;
+  const laneOffset = 16;
+  const startX = p0.x - Math.cos(startAngle) * 35;
+  const startY = p0.y - Math.sin(startAngle) * 35;
+
+  // Player (pole position)
+  playerCar = new Car(startX, startY, startAngle, playerColor, selectedModel, true);
+
+  // AI in grid formation (2x2-ish behind)
   aiCars = [];
+  const aiPositions = [
+    {ox: -gridSpacing, oy: -laneOffset},   // inside
+    {ox: -gridSpacing * 2, oy: laneOffset}, // outside
+    {ox: -gridSpacing * 3, oy: -laneOffset * 0.7}
+  ];
   for (let i = 0; i < 3; i++) {
     const modelId = (selectedModel + i + 1) % 4;
     const col = COLORS[(i + 3) % COLORS.length];
-    const offset = (i + 1) * 19;
-    const ai = new Car(start.x + 15, start.y + 18 + offset, 0.02, col, modelId, false);
+    const pos = aiPositions[i];
+    const ax = startX + Math.cos(startAngle) * pos.ox - Math.sin(startAngle) * pos.oy;
+    const ay = startY + Math.sin(startAngle) * pos.ox + Math.cos(startAngle) * pos.oy;
+    const ai = new Car(ax, ay, startAngle, col, modelId, false);
     aiCars.push(ai);
   }
 
@@ -641,6 +697,10 @@ function startRace() {
   playerCar.laps = 0;
   aiCars.forEach(c => c.laps = 0);
   startTime = performance.now();
+  lapStartTime = startTime;
+  currentLapTime = 0;
+  bestLapTime = Infinity;
+  totalRaceTime = 0;
   raceFinished = false;
   results = [];
 
@@ -731,6 +791,16 @@ function draw() {
 function drawTrack(points, camX, camY) {
   const roadWidth = 118;
 
+  // Grass / background detail (generated look)
+  ctx.fillStyle = '#2e7d32';
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillStyle = '#256d2b';
+  for (let i = 0; i < 60; i++) {
+    const gx = ((i * 37) % (WIDTH + 100)) - 50;
+    const gy = ((i * 53) % (HEIGHT + 80)) - 40;
+    ctx.fillRect(gx, gy, 3, 1);
+  }
+
   // Asphalt
   ctx.strokeStyle = '#3a3a3a';
   ctx.lineWidth = roadWidth;
@@ -744,9 +814,9 @@ function drawTrack(points, camX, camY) {
   ctx.closePath();
   ctx.stroke();
 
-  // Edge lines
-  ctx.strokeStyle = '#555';
-  ctx.lineWidth = 6;
+  // Curbs / edges (generated look)
+  ctx.strokeStyle = '#cc3333';
+  ctx.lineWidth = 8;
   ctx.beginPath();
   ctx.moveTo(points[0].x - camX, points[0].y - camY);
   for (let i = 1; i < points.length; i++) {
@@ -754,11 +824,14 @@ function drawTrack(points, camX, camY) {
   }
   ctx.closePath();
   ctx.stroke();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 4;
+  ctx.stroke();
 
-  // Center dashed line
-  ctx.strokeStyle = '#ddd';
+  // Center line (better dashes)
+  ctx.strokeStyle = '#ffeb3b';
   ctx.lineWidth = 3;
-  ctx.setLineDash([18, 22]);
+  ctx.setLineDash([22, 18]);
   ctx.beginPath();
   ctx.moveTo(points[0].x - camX, points[0].y - camY);
   for (let i = 1; i < points.length; i++) {
@@ -768,34 +841,55 @@ function drawTrack(points, camX, camY) {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Start/finish line
+  // Start/finish line (thicker, checkered feel)
   const p0 = points[0];
   const p1 = points[1];
   const mx = (p0.x + p1.x) / 2 - camX;
   const my = (p0.y + p1.y) / 2 - camY;
   ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 8;
   ctx.beginPath();
-  ctx.moveTo(mx - 35, my - 35);
-  ctx.lineTo(mx + 35, my + 35);
+  ctx.moveTo(mx - 42, my - 42);
+  ctx.lineTo(mx + 42, my + 42);
+  ctx.stroke();
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(mx - 42, my - 42);
+  ctx.lineTo(mx + 42, my + 42);
   ctx.stroke();
 }
 
 function drawHUD() {
-  ctx.fillStyle = 'rgba(0,0,0,0.65)';
-  ctx.fillRect(12, 12, 200, 70);
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(12, 12, 230, 85);
 
   ctx.fillStyle = '#22f1ff';
-  ctx.font = 'bold 14px Inter, sans-serif';
-  ctx.fillText(`LAP ${Math.min(playerCar.laps + 1, 3)}/3`, 20, 28);
+  ctx.font = 'bold 13px Inter, sans-serif';
+  ctx.fillText(`LAP ${Math.min(playerCar.laps + 1, 3)}/3`, 18, 26);
 
-  const elapsed = (performance.now() - startTime) / 1000;
-  const mins = Math.floor(elapsed / 60);
-  const secs = (elapsed % 60).toFixed(2).padStart(4, '0');
-  ctx.fillText(`TIME  ${mins}:${secs}`, 20, 46);
+  // Current lap time
+  currentLapTime = (performance.now() - lapStartTime) / 1000;
+  let cM = Math.floor(currentLapTime / 60);
+  let cS = currentLapTime % 60;
+  ctx.fillText(`LAP  ${cM}:${cS.toFixed(2).padStart(4,'0')}`, 18, 42);
 
+  // Best lap
+  if (bestLapTime < Infinity) {
+    let bM = Math.floor(bestLapTime / 60);
+    let bS = bestLapTime % 60;
+    ctx.fillStyle = '#a5d6a7';
+    ctx.fillText(`BEST ${bM}:${bS.toFixed(2).padStart(4,'0')}`, 18, 58);
+  }
+
+  // Total race time
+  totalRaceTime = (performance.now() - startTime) / 1000;
+  let tM = Math.floor(totalRaceTime / 60);
+  let tS = totalRaceTime % 60;
   ctx.fillStyle = '#fff';
-  ctx.fillText(`SPEED ${Math.round(Math.abs(playerCar.speed))}`, 20, 64);
+  ctx.fillText(`RACE ${tM}:${tS.toFixed(2).padStart(4,'0')}`, 18, 74);
+
+  ctx.fillText(`SPEED ${Math.round(Math.abs(playerCar.speed))}`, 18, 90);
 }
 
 function endRace() {
@@ -841,9 +935,9 @@ function drawResults() {
   ctx.font = '16px Inter, sans-serif';
   ctx.fillText(`3 Laps • ${currentTrack.name}`, WIDTH/2, 160);
 
-  // Results list
+  // Results list + times
   ctx.textAlign = 'left';
-  let y = 210;
+  let y = 200;
   results.forEach((r, i) => {
     const t = r.time;
     const m = Math.floor(t / 60);
@@ -851,9 +945,15 @@ function drawResults() {
     const timeStr = `${m}:${s}`;
     const text = `${i+1}. ${r.name}`;
     ctx.fillStyle = r.isPlayer ? '#22f1ff' : '#fff';
-    ctx.fillText(text, 160, y);
-    ctx.fillText(timeStr, 520, y);
-    y += 32;
+    ctx.fillText(text, 150, y);
+    ctx.fillText(timeStr, 420, y);
+    if (r.isPlayer && bestLapTime < Infinity) {
+      const blM = Math.floor(bestLapTime / 60);
+      const blS = bestLapTime % 60;
+      ctx.fillStyle = '#a5d6a7';
+      ctx.fillText(`Best Lap: ${blM}:${blS.toFixed(2).padStart(4,'0')}`, 150, y + 18);
+    }
+    y += 38;
   });
 
   // Buttons
