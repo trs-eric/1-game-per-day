@@ -239,14 +239,12 @@ class Car {
     const speedFactor = Math.max(0.4, Math.min(1, Math.abs(newSpeed) / 120));
     const slipFactor = Math.max(0, (Math.abs(newSpeed) - 80) / 150) * Math.abs(actualSteer) * 1.5;
 
-    // Apply slip at high speed turns - positional skid only, no hard speed drop
+    // Apply slip at high speed turns - only positional skid (no forward speed drop from steering)
     if (slipFactor > 0.05) {
       const slipX = -dirY * slipFactor * 40 * dt;
       const slipY = dirX * slipFactor * 40 * dt;
       this.x += slipX;
       this.y += slipY;
-      // Minimal speed loss, mostly just slide
-      newSpeed *= (1 - slipFactor * 0.15);
       // Add rotational skid for more slide
       this.angle += actualSteer * 0.03 * (newSpeed / 150) * dt;
     }
@@ -880,39 +878,40 @@ function startRace() {
   const p1 = points[1];
   const startAngle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
 
-  // Redesigned starting grid: neat, spaced, on track, correct direction
-  // Use larger spacing based on car size (~50 units)
-  const carLength = 50;
-  const spacing = carLength + 15;  // front to back
-  const laneSep = 35;              // side to side
+  // Clean starting grid centered on center line: 2 cars each side (left/right), rows front/back, no overlap, on track
+  const laneDist = 22;
+  const rowDist = 38;
 
-  // Start positions: behind the line p0, in direction opposite to track
   const backDirX = -Math.cos(startAngle);
   const backDirY = -Math.sin(startAngle);
-  const sideDirX = -Math.sin(startAngle);  // perp
+  const sideDirX = -Math.sin(startAngle);
   const sideDirY = Math.cos(startAngle);
 
-  // Player at front, lane 0
-  const playerX = p0.x + backDirX * 10 + sideDirX * (laneSep / 2);
-  const playerY = p0.y + backDirY * 10 + sideDirY * (laneSep / 2);
+  // Base center point behind p0 on center line
+  const baseX = p0.x + backDirX * 32;
+  const baseY = p0.y + backDirY * 32;
+
+  // Player front left (- side)
+  const playerX = baseX + sideDirX * (-laneDist);
+  const playerY = baseY + sideDirY * (-laneDist);
   playerCar = new Car(playerX, playerY, startAngle, playerColor, selectedModel, true);
 
-  // AI cars: staggered grid, 2 lanes, rows behind
   aiCars = [];
-  const positions = [
-    {row: 1, lane: -1},  // row1, lane right
-    {row: 2, lane: 1},   // row2, lane left
-    {row: 3, lane: -1}   // row3, lane right
-  ];
-  for (let i = 0; i < 3; i++) {
-    const pos = positions[i];
-    const modelId = (selectedModel + i + 1) % 4;
-    const col = COLORS[(i + 3) % COLORS.length];
-    const ax = p0.x + backDirX * (10 + pos.row * spacing) + sideDirX * (pos.lane * laneSep);
-    const ay = p0.y + backDirY * (10 + pos.row * spacing) + sideDirY * (pos.lane * laneSep);
-    const ai = new Car(ax, ay, startAngle, col, modelId, false);
-    aiCars.push(ai);
-  }
+  // Front right (+ side)
+  let ax = baseX + sideDirX * laneDist;
+  let ay = baseY + sideDirY * laneDist;
+  aiCars.push(new Car(ax, ay, startAngle, COLORS[3], (selectedModel + 1) % 4, false));
+
+  // Back left
+  ax = baseX + backDirX * rowDist + sideDirX * (-laneDist);
+  ay = baseY + backDirY * rowDist + sideDirY * (-laneDist);
+  aiCars.push(new Car(ax, ay, startAngle, COLORS[4], (selectedModel + 2) % 4, false));
+
+  // Back right
+  ax = baseX + backDirX * rowDist + sideDirX * laneDist;
+  ay = baseY + backDirY * rowDist + sideDirY * laneDist;
+  aiCars.push(new Car(ax, ay, startAngle, COLORS[5], (selectedModel + 3) % 4, false));
+
 
   // Reset state
   playerCar.laps = 0;
@@ -1105,30 +1104,34 @@ function drawTrack(points, camX, camY) {
   ctx.lineTo(mx + 42, my + 42);
   ctx.stroke();
 
-  // Starting grid squares painted on track (neat grid at start positions)
-  ctx.fillStyle = '#444';
+  // Starting grid squares painted on track - centered on center line, even # boxes each side
+  ctx.fillStyle = '#555';
   ctx.strokeStyle = '#222';
-  const gridSize = 28;
-  const startDirX = p1.x - p0.x;
-  const startDirY = p1.y - p0.y;
-  const sLen = Math.hypot(startDirX, startDirY) || 1;
-  const sdx = startDirX / sLen;
-  const sdy = startDirY / sLen;
-  const pdx = -sdy;  // perp
-  const pdy = sdx;
+  const gSize = 26;
+  const rowDistG = 38;
+  const laneDistG = 22;
 
-  // Grid positions relative to p0, behind the line
-  const gridOffsets = [
-    {rx: 0, ry: 0}, {rx: 0, ry: -1}, 
-    {rx: -1, ry: 0.5}, {rx: -1, ry: -1.5},
-    {rx: -2, ry: 0}, {rx: -2, ry: -1},
-    {rx: -3, ry: 0.5}, {rx: -3, ry: -1.5}
-  ];
-  for (let off of gridOffsets) {
-    const gx = p0.x + sdx * (off.rx * 45 - 20) + pdx * (off.ry * 32);
-    const gy = p0.y + sdy * (off.rx * 45 - 20) + pdy * (off.ry * 32);
-    ctx.fillRect(gx - gridSize/2 - camX, gy - gridSize/2 - camY, gridSize, gridSize);
-    ctx.strokeRect(gx - gridSize/2 - camX, gy - gridSize/2 - camY, gridSize, gridSize);
+  const dirX = p1.x - p0.x;
+  const dirY = p1.y - p0.y;
+  const glen = Math.hypot(dirX, dirY) || 1;
+  const gsdx = dirX / glen;
+  const gsdy = dirY / glen;
+  const gpx = -gsdy;
+  const gpy = gsdx;
+
+  // Center point slightly behind p0
+  const gcX = p0.x - gsdx * 28;
+  const gcY = p0.y - gsdy * 28;
+
+  // 2 rows, 2 per side (even each side)
+  const gridLanes = [-1.5, -0.5, 0.5, 1.5]; // positions relative to center, 2 left 2 right
+  for (let r = 0; r < 2; r++) {
+    for (let lane of gridLanes) {
+      const gx = gcX - gsdx * (r * rowDistG) + gpx * (lane * laneDistG);
+      const gy = gcY - gsdy * (r * rowDistG) + gpy * (lane * laneDistG);
+      ctx.fillRect(gx - gSize/2 - camX, gy - gSize/2 - camY, gSize, gSize);
+      ctx.strokeRect(gx - gSize/2 - camX, gy - gSize/2 - camY, gSize, gSize);
+    }
   }
 }
 
