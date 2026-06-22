@@ -332,8 +332,8 @@ function update(dt) {
   if (!player.onGround) player.anim += 0.04 * frameScale;
 
   // Camera follow (forward bias, quick action)
-  const targetCam = player.x - 255;
-  camX = camX * 0.65 + targetCam * 0.35;
+  const targetCam = player.x - 240;
+  camX = camX * 0.4 + targetCam * 0.6;
   if (camX < 0) camX = 0;
 
   // Generate + cull
