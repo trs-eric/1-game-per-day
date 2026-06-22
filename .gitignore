@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log
+
+# IDE / editors
+.idea/
+.vscode/
+*.swp
+*~
+
+# Logs
+*.log
+
+# Local env / secrets (never commit real keys)
+.env
+.env.local
+
+# Thumbnails (optional - you can commit screenshots)
+# assets/thumbnails/*.tmp

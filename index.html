@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1 Game Per Day</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+    
+    :root {
+      --accent: #22f1ff;
+    }
+    
+    body {
+      font-family: 'Inter', system_ui, sans-serif;
+    }
+    
+    .logo-font {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+
+    .game-card {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                  box-shadow 0.2s cubic-bezier(0.4, 0.0, 0.2, 1),
+                  border-color 0.2s;
+    }
+    
+    .game-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    .neon-text {
+      text-shadow: 0 0 10px rgb(34 241 255 / 0.5);
+    }
+
+    .section-header {
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: -0.04em;
+    }
+
+    .filter-btn {
+      transition: all 0.1s ease;
+    }
+    
+    .filter-btn.active {
+      background-color: #22f1ff;
+      color: #000;
+      border-color: #22f1ff;
+    }
+
+    .game-thumbnail {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-thumbnail::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent 40%,
+        rgba(0, 0, 0, 0.65) 90%
+      );
+    }
+
+    .tech-badge {
+      font-size: 0.65rem;
+      padding: 1px 8px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .canvas-badge { background: #3b82f6; color: white; }
+    .webgl-badge { background: #a855f7; color: white; }
+    .wasm-badge { background: #eab308; color: black; }
+
+    .day-badge {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(8px);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 640px) {
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+    }
+
+    .mini-preview {
+      transition: transform 0.3s ease;
+    }
+    
+    .game-card:hover .mini-preview {
+      transform: scale(1.03);
+    }
+  </style>
+</head>
+<body class="bg-[#0a0a0f] text-white">
+  <!-- Header -->
+  <header class="border-b border-white/10">
+    <div class="max-w-screen-xl mx-auto px-6 py-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-x-3">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center">
+            <i class="fa-solid fa-gamepad text-black text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="logo-font text-3xl font-semibold tracking-tighter">1 Game Per Day</h1>
+            <p class="text-xs text-white/50 -mt-1">Daily web games • JS • WebGL • WASM</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-x-3 text-sm">
+          <a href="https://github.com/${GITHUB_USER}/1-game-per-day" target="_blank"
+             class="flex items-center gap-x-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors">
+            <i class="fa-brands fa-github"></i>
+            <span class="hidden sm:inline">View on GitHub</span>
+          </a>
+          <a href="#contribute" 
+             class="px-4 py-2 rounded-xl bg-white text-black font-medium hover:bg-white/90 transition-colors text-sm">
+            See the progress
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="max-w-screen-xl mx-auto px-6 pt-12 pb-8">
+    <div class="max-w-2xl">
+      <div class="inline-flex items-center gap-x-2 rounded-full bg-white/5 px-3 py-1 text-xs tracking-[1px] mb-4 border border-white/10">
+        <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+        <span class="font-medium text-emerald-400">ERIC'S DAILY CHALLENGE</span>
+      </div>
+      
+      <h2 class="section-header text-6xl sm:text-7xl font-semibold tracking-tighter leading-none mb-4">
+        Hi, I'm Eric.<br>
+        One game. Every day.
+      </h2>
+      <p class="text-xl text-white/70 max-w-md">
+        I'm building and sharing one new web game every single day. 
+        JavaScript, Canvas, WebGL, WebAssembly. No builds. Just browser magic.
+      </p>
+      
+      <div class="flex items-center gap-x-4 mt-8 text-sm">
+        <div class="flex -space-x-1">
+          <div class="w-7 h-7 bg-zinc-700 rounded-full border-2 border-[#0a0a0f] flex items-center justify-center text-[10px]">JS</div>
+          <div class="w-7 h-7 bg-violet-500 rounded-full border-2 border-[#0a0a0f]"></div>
+          <div class="w-7 h-7 bg-yellow-400 rounded-full border-2 border-[#0a0a0f]"></div>
+        </div>
+        <div class="text-white/60" id="game-status">
+          <span id="game-count">0</span> games published so far
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="max-w-screen-xl mx-auto px-6 pb-6 sticky top-0 z-50 bg-[#0a0a0f]/95 backdrop-blur-xl border-b border-white/10 py-4 -mt-1">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="flex items-center gap-x-2 overflow-x-auto pb-1 sm:pb-0">
+        <button onclick="filterGames('all')" 
+                class="filter-btn active px-5 py-1.5 text-sm rounded-3xl border border-white/20 hover:border-white/40 bg-white/5 whitespace-nowrap"
+                data-filter="all">
+          All Games
+        </button>
+        <button onclick="filterGames('canvas')" 
+                class="filter-btn px-5 py-1.5 text-sm rounded-3xl border border-white/20 hover:border-white/40 bg-white/5 flex items-center gap-x-2 whitespace-nowrap"
+                data-filter="canvas">
+          <i class="fa-solid fa-paint-brush text-blue-400"></i>
+          <span>Canvas 2D</span>
+        </button>
+        <button onclick="filterGames('webgl')" 
+                class="filter-btn px-5 py-1.5 text-sm rounded-3xl border border-white/20 hover:border-white/40 bg-white/5 flex items-center gap-x-2 whitespace-nowrap"
+                data-filter="webgl">
+          <i class="fa-solid fa-cube text-violet-400"></i>
+          <span>WebGL</span>
+        </button>
+        <button onclick="filterGames('wasm')" 
+                class="filter-btn px-5 py-1.5 text-sm rounded-3xl border border-white/20 hover:border-white/40 bg-white/5 flex items-center gap-x-2 whitespace-nowrap"
+                data-filter="wasm">
+          <i class="fa-solid fa-microchip text-yellow-400"></i>
+          <span>WASM</span>
+        </button>
+      </div>
+
+      <div class="flex-1"></div>
+
+      <div class="relative w-full sm:w-64">
+        <input id="search-input" type="text" placeholder="Search games..." 
+               onkeyup="filterGames(currentFilter)"
+               class="w-full bg-white/5 border border-white/10 focus:border-white/30 transition-colors rounded-3xl pl-10 py-2 text-sm placeholder:text-white/40 focus:outline-none">
+        <i class="fa-solid fa-search absolute left-4 top-2.5 text-white/40"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Games Grid -->
+  <main class="max-w-screen-xl mx-auto px-6 py-8">
+    <div id="games-grid" class="gallery-grid">
+      <!-- Populated by JavaScript -->
+    </div>
+  </main>
+
+  <!-- Contribute Section -->
+  <div id="contribute" class="max-w-screen-xl mx-auto px-6 py-16 border-t border-white/10">
+    <div class="grid md:grid-cols-2 gap-10 items-center">
+      <div>
+        <h3 class="text-4xl font-semibold tracking-tight mb-3">Follow along</h3>
+        <p class="text-lg text-white/70">I'm building this in the open. The first game is almost ready - each one lives in its own folder under <code class="font-mono text-sm bg-white/10 px-1 py-0.5 rounded">games/</code>.</p>
+        
+        <div class="mt-6 flex gap-x-3">
+          <a href="template/" 
+             class="inline-flex items-center px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 transition text-sm font-medium">
+            <i class="fa-solid fa-copy mr-2"></i>
+            See how I build them
+          </a>
+          <a href="https://github.com/${GITHUB_USER}/1-game-per-day" target="_blank"
+             class="inline-flex items-center px-5 py-3 rounded-2xl bg-white text-black hover:bg-white/90 transition text-sm font-medium">
+            <i class="fa-brands fa-github mr-2"></i>
+            Fork on GitHub
+          </a>
+        </div>
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-3xl p-6 text-sm">
+        <div class="font-medium mb-3 text-white/80">What I aim for in every game:</div>
+        <ul class="space-y-2 text-white/70">
+          <li class="flex gap-x-3"><span class="text-emerald-400 font-mono w-4">01</span> <span>Genuinely fun to play</span></li>
+          <li class="flex gap-x-3"><span class="text-emerald-400 font-mono w-4">02</span> <span>Keyboard + touch friendly</span></li>
+          <li class="flex gap-x-3"><span class="text-emerald-400 font-mono w-4">03</span> <span>One-screen, instant fun</span></li>
+          <li class="flex gap-x-3"><span class="text-emerald-400 font-mono w-4">04</span> <span>Clear how-to-play</span></li>
+          <li class="flex gap-x-3"><span class="text-emerald-400 font-mono w-4">05</span> <span>Unit tests for core logic</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-white/10 py-8 text-center text-xs text-white/50">
+    Built in public by Eric Canales • One game at a time • MIT licensed
+  </footer>
+
+  <script>
+    // Tailwind script
+    function initTailwind() {
+      document.documentElement.style.setProperty('--accent', '#22f1ff');
+    }
+
+    // Game data - populated manually when adding new games (see root README)
+    const GITHUB_USER = "trs-eric"; // GitHub username
+
+    const games = [
+      // Add your game entries here as we build them.
+      // Example:
+      // {
+      //   id: "day-001-asteroids",
+      //   day: "001",
+      //   title: "Asteroids",
+      //   description: "Classic arcade action.",
+      //   tech: "canvas",
+      //   techLabel: "Canvas",
+      //   thumbnail: null,
+      //   icon: "fa-solid fa-rocket",
+      //   color: "#3b82f6"
+      // }
+    ];
+
+    let currentFilter = 'all';
+
+    function createGameCard(game) {
+      const card = document.createElement('article');
+      card.className = `game-card bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden flex flex-col group`;
+      card.dataset.tech = game.tech;
+      card.dataset.title = game.title.toLowerCase();
+      card.dataset.id = game.id;
+
+      const thumbHTML = game.thumbnail 
+        ? `<img src="${game.thumbnail}" class="w-full aspect-video object-cover mini-preview" alt="${game.title}">`
+        : `
+          <div class="game-thumbnail w-full aspect-video flex items-center justify-center" style="background: linear-gradient(135deg, ${game.color}22, #0a0a0f);">
+            <div class="text-center">
+              <i class="${game.icon} text-5xl mb-1" style="color: ${game.color}"></i>
+              <div class="text-[10px] tracking-[2px] font-mono text-white/40 mt-1">DAY ${game.day}</div>
+            </div>
+          </div>
+        `;
+
+      const techClass = game.tech === 'canvas' ? 'canvas-badge' : 
+                        game.tech === 'webgl' ? 'webgl-badge' : 'wasm-badge';
+
+      card.innerHTML = `
+        <div class="relative">
+          ${thumbHTML}
+          
+          <div class="absolute top-3 left-3 flex items-center gap-x-1.5">
+            <div class="day-badge px-2.5 py-px rounded-2xl text-[10px] font-mono tracking-widest border border-white/20 text-white/80">
+              DAY ${game.day}
+            </div>
+            <div class="tech-badge ${techClass}">
+              ${game.techLabel}
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 flex flex-col flex-1">
+          <div class="flex-1">
+            <h3 class="font-semibold text-xl tracking-tight mb-1 group-hover:text-[#22f1ff] transition-colors">${game.title}</h3>
+            <p class="text-white/60 text-sm leading-snug line-clamp-3">${game.description}</p>
+          </div>
+
+          <div class="flex items-center justify-between gap-x-2 mt-5">
+            <a href="games/${game.id}/" 
+               class="flex-1 inline-flex justify-center items-center gap-x-2 bg-white hover:bg-[#22f1ff] active:bg-white/90 transition-colors text-black font-semibold rounded-2xl py-2.5 text-sm">
+              <i class="fa-solid fa-play"></i>
+              <span>Play</span>
+            </a>
+            
+            <a href="https://github.com/${GITHUB_USER}/1-game-per-day/tree/main/games/${game.id}" target="_blank"
+               class="px-4 py-2.5 rounded-2xl border border-white/15 hover:bg-white/5 transition flex items-center justify-center"
+               title="View source on GitHub">
+              <i class="fa-brands fa-github"></i>
+            </a>
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
+    function renderGames(filteredGames) {
+      const grid = document.getElementById('games-grid');
+      grid.innerHTML = '';
+
+      if (filteredGames.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full">
+            <div class="max-w-md mx-auto text-center py-12 px-6 border border-white/10 rounded-3xl bg-white/5">
+              <div class="mx-auto w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-4">
+                <i class="fa-solid fa-gamepad text-2xl text-white/60"></i>
+              </div>
+              <h3 class="font-semibold text-xl mb-2">Day 1 is coming soon</h3>
+              <p class="text-white/60 text-sm mb-6">
+                I'm building the first game right now. Follow along as I share the progress here.
+              </p>
+              <a href="template/" 
+                 class="inline-flex items-center gap-x-2 px-5 py-2 rounded-2xl bg-white text-black text-sm font-medium hover:bg-white/90 transition">
+                <i class="fa-solid fa-copy"></i>
+                <span>See how they're made</span>
+              </a>
+              <div class="mt-4 text-[11px] text-white/40">
+                Check the README to see how I'm adding games
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById('game-count').textContent = games.length;
+        return;
+      }
+
+      filteredGames.forEach(game => {
+        grid.appendChild(createGameCard(game));
+      });
+
+      const countEl = document.getElementById('game-count');
+      const statusEl = document.getElementById('game-status');
+      countEl.textContent = games.length;
+      if (games.length === 0) {
+        statusEl.innerHTML = '<span id="game-count">0</span> games published yet - the first one is almost ready!';
+      } else if (games.length === 1) {
+        statusEl.innerHTML = '<span id="game-count">1</span> game published so far';
+      } else {
+        statusEl.innerHTML = `<span id="game-count">${games.length}</span> games published so far`;
+      }
+    }
+
+    function filterGames(filter) {
+      currentFilter = filter;
+
+      // Update active button styles
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active', 'border-[#22f1ff]', 'bg-[#22f1ff]', 'text-black');
+        btn.classList.add('border-white/20', 'bg-white/5');
+
+        if (filter === 'all' && btn.dataset.filter === 'all') {
+          btn.classList.add('active');
+          btn.classList.remove('border-white/20', 'bg-white/5');
+        }
+        if (filter === btn.dataset.filter && filter !== 'all') {
+          btn.classList.add('active');
+          btn.classList.remove('border-white/20', 'bg-white/5');
+        }
+      });
+
+      const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+
+      let filtered = games;
+
+      if (filter !== 'all') {
+        filtered = filtered.filter(g => g.tech === filter);
+      }
+
+      if (searchTerm) {
+        filtered = filtered.filter(g => 
+          g.title.toLowerCase().includes(searchTerm) || 
+          g.description.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      renderGames(filtered);
+    }
+
+    function initSearch() {
+      const input = document.getElementById('search-input');
+      
+      // Allow Enter to focus first result
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          const first = document.querySelector('#games-grid .game-card');
+          if (first) first.querySelector('a').focus();
+        }
+      });
+    }
+
+    function init() {
+      initTailwind();
+      renderGames(games);
+      initSearch();
+
+      // Show all by default
+      document.querySelector('[data-filter="all"]').classList.add('active');
+
+      // Keyboard shortcut hint
+      console.log('%c[1 Game Per Day] Press / to focus search', 'color:#555');
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement.tagName === 'BODY') {
+          e.preventDefault();
+          document.getElementById('search-input').focus();
+        }
+      });
+    }
+
+    window.filterGames = filterGames;
+    window.onload = init;
+  </script>
+</body>
+</html>
