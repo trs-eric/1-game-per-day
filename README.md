@@ -6,6 +6,8 @@ A clean GitHub Pages skeleton for building and publishing one small web game per
 
 **Live site:** https://trs-eric.github.io/1-game-per-day/
 
+> **Note:** All games are AI-generated and worked on for only a few hours until they seem to plateau in playability.
+
 > **Configured for:** GitHub user `trs-eric`. Name and email already set in the LICENSE file.
 
 ## What This Is
