@@ -82,10 +82,10 @@ let particles = [];
 // Physics (tuned for quick responsive action)
 const GRAV = 0.82;
 const MAX_VY = 13;
-const MOVE_ACC = 0.72;
-const AIR_ACC = 0.38;
-const FRICTION = 0.78;
-const MAX_VX = 5.8;
+const MOVE_ACC = 0.48;
+const AIR_ACC = 0.26;
+const FRICTION = 0.82;
+const MAX_VX = 3.1;
 const NORMAL_JUMP = -11.4;
 const MAX_SUPER = 10.2;
 
@@ -284,7 +284,7 @@ function update(dt) {
   if (!ctrlHeld && wasCtrl && charge > 0.04) {
     const boost = NORMAL_JUMP - (charge * MAX_SUPER);
     player.vy = boost;
-    player.vx += player.facing * (1.6 + charge * 2.3);
+    player.vx += player.facing * (0.8 + charge * 1.5);
     player.onGround = false;
     spawnParticles(player.x + player.w / 2, player.y + player.h, 7 + Math.floor(charge * 6), '#ffeb3b');
     spawnParticles(player.x + player.w / 2, player.y + player.h + 2, 4, '#f4a261');
@@ -316,10 +316,10 @@ function update(dt) {
     return;
   }
 
-  // Prevent going too far behind
-  if (player.x < camX + 12) {
-    player.x = camX + 12;
-    player.vx = Math.max(0, player.vx);
+  // Prevent going too far behind (allow some left movement for platforming feel)
+  if (player.x < camX - 20) {
+    player.x = camX - 20;
+    player.vx = Math.max(0, player.vx * 0.3);
   }
 
   // Animation
@@ -383,6 +383,9 @@ function drawPixelCat(sx, sy, facing, anim, onGround, charging) {
   ctx.save();
   ctx.translate(Math.floor(sx), Math.floor(sy));
   if (facing < 0) ctx.scale(-1, 1);
+
+  // Center the sprite visually around collision box for correct flip feel (prevents "backwards" look on turn)
+  ctx.translate(-4, 0);
 
   const crouch = charging ? 2.5 : 0;
   const bob = onGround ? Math.sin(anim * 1.6) * 0.8 : 0;
