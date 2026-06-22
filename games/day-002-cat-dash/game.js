@@ -332,10 +332,10 @@ function update(dt) {
   }
 
   // Prevent going too far behind (allow some left movement for platforming feel)
-  if (player.x < camX - 30) {
-    player.x = camX - 30;
-    // do not force vx positive here; let player control direction
-    if (player.vx < 0) player.vx = 0;
+  if (player.x < camX - 40) {
+    player.x = camX - 40;
+    // only kill left velocity if not actively pressing left
+    if (player.vx < 0 && !left) player.vx = 0;
   }
 
   // Animation
