@@ -21,6 +21,7 @@ You add games yourself (one folder per game). The main page automatically become
 - Support for Canvas, WebGL, and WebAssembly
 - Easy to host on GitHub Pages
 - Simple to add a new game every day
+- Games can have multiple screens and more complex layouts (no strict one-screen rule)
 
 ## Development Guidelines
 

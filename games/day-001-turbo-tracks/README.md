@@ -27,7 +27,6 @@ Keep games fun and polished. There are no size limits.
 - Use regular dashes (-) only.
 - Extract pure logic (e.g. game rules, scoring) into functions and add unit tests where possible to verify behavior.
 - Follow the main project guidelines in the root README.
-- Games are not restricted to a single screen.
 
 ## Tips
 
