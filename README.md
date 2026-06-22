@@ -16,7 +16,7 @@ This repo contains the skeleton for Eric's "1 Game Per Day" project along with c
 
 Games live in `games/`. The root `index.html` is the public gallery.
 
-Currently includes: **Grand Turbo Racing** (day-001).
+Currently includes: **Grand Turbo Racing** (day-001), **Cat Dash** (day-002).
 
 ## Goals
 
