@@ -106,6 +106,8 @@ function resetGameObjects() {
   levelStartX = 60;
   gameState.score = 0;
   gameState.state = 'ready';
+  spacePressed = false;
+  prevSpace = false;
   platforms = [];
   particles = [];
 
