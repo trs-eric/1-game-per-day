@@ -91,7 +91,7 @@ const MAX_SUPER = 10.2;
 
 function resetGameObjects() {
   player.x = 90;
-  player.y = 310;
+  player.y = 325;
   player.vx = 0;
   player.vy = 0;
   player.w = 28;
@@ -214,6 +214,22 @@ function resolveCollisions() {
         // hit head
         player.y = plat.y + plat.h + 0.1;
         player.vy = Math.min(0.6, player.vy * -0.2);
+      }
+    }
+  }
+
+  // Ledge/edge support using center of cat (allows walking near edges without instantly falling off)
+  // This gives natural overhang so you can approach the end of a platform and turn around.
+  if (!player.onGround && player.vy >= 0) {
+    const centerX = player.x + player.w / 2;
+    const footY = player.y + player.h;
+    for (let plat of platforms) {
+      if (centerX > plat.x && centerX < plat.x + plat.w &&
+          footY <= plat.y + 2 && footY >= plat.y - 1) {
+        player.y = plat.y - player.h;
+        player.vy = 0;
+        player.onGround = true;
+        break;
       }
     }
   }
@@ -372,7 +388,7 @@ function die() {
 function respawnLevel() {
   // Respawn at start of current level section
   player.x = levelStartX + 30;
-  player.y = 280;
+  player.y = 325;
   player.vx = 0;
   player.vy = 0;
   player.onGround = false;
