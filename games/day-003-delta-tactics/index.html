@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAY 003 - Delta Tactics</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Space+Grotesk:wght@600&amp;display=swap');
+    
+    :root {
+      --accent: #22f1ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0a0a0f;
+      color: #fff;
+      font-family: 'Inter', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .header {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.35rem;
+      margin: 0;
+      font-weight: 600;
+    }
+    .back {
+      color: #22f1ff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .back:hover { text-decoration: underline; }
+    
+    .canvas-container {
+      position: relative;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.6);
+    }
+    
+    canvas {
+      display: block;
+      touch-action: none;
+    }
+    
+    .ui {
+      width: 100%;
+      max-width: 800px;
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    button {
+      background: #222;
+      color: white;
+      border: 1px solid #444;
+      padding: 10px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.1s;
+    }
+    button:hover { background: #333; border-color: #666; }
+    button.primary {
+      background: #22f1ff;
+      color: black;
+      border-color: #22f1ff;
+      font-weight: 600;
+    }
+    
+    .info {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 16px;
+      max-width: 800px;
+      text-align: center;
+      line-height: 1.5;
+    }
+    
+    .status {
+      font-size: 0.85rem;
+      padding: 2px 12px;
+      border-radius: 999px;
+      background: #1f1f1f;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="background:#222; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-family:monospace;">DAY 003</span>
+        <h1>Delta Tactics</h1>
+      </div>
+    </div>
+    <a href="../../" class="back">← Back to all games</a>
+  </div>
+
+  <div class="canvas-container">
+    <canvas id="game" width="800" height="600"></canvas>
+  </div>
+
+  <div class="ui">
+    <button onclick="startGame()" class="primary">▶ Start / Restart</button>
+    <button onclick="resetGame()">Reset</button>
+    
+    <div style="margin-left:auto; display:flex; gap:12px; align-items:center;">
+      <div id="current-unit" class="status">Unit: Alpha</div>
+      <div id="status" class="status">Press Start</div>
+    </div>
+  </div>
+
+  <div class="info">
+    <strong>Controls:</strong> Click to select action / target • Mouse over for info
+    <br>
+    <small>Turn-based tactics. Move (up to 10) or Shoot. Reach the guarded building. Octagonal grid movement.</small>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
