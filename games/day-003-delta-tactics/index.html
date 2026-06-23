@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DAY 003 - Delta Tactics</title>
+  <title>DAY 003 - Delta Tactics (3D)</title>
+  <!-- Three.js via CDN for 3D (no build step) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Space+Grotesk:wght@600&amp;display=swap');
     
@@ -110,7 +112,7 @@
     <div>
       <div style="display:flex; align-items:center; gap:8px;">
         <span style="background:#222; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-family:monospace;">DAY 003</span>
-        <h1>Delta Tactics</h1>
+        <h1>Delta Tactics <small style="font-size:0.6em">(3D)</small></h1>
       </div>
     </div>
     <a href="../../" class="back">← Back to all games</a>
@@ -123,6 +125,8 @@
   <div class="ui">
     <button onclick="startGame()" class="primary">▶ Start / Restart</button>
     <button onclick="resetGame()">Reset</button>
+    <button onclick="doMoveAction()">MOVE</button>
+    <button onclick="doShootAction()">SHOOT</button>
     
     <div style="margin-left:auto; display:flex; gap:12px; align-items:center;">
       <div id="current-unit" class="status">Unit: Alpha</div>
@@ -131,9 +135,9 @@
   </div>
 
   <div class="info">
-    <strong>Controls:</strong> Click to select action / target • Mouse over for info
+    <strong>Controls:</strong> Click MOVE or SHOOT buttons • Then click grid tile/target • Drag mouse to rotate camera
     <br>
-    <small>Turn-based tactics. Move (up to 10) or Shoot. Reach the guarded building. Octagonal grid movement.</small>
+    <small>3D Turn-based tactics. 4 units (Alpha/Beta/Gamma/Delta). Move up to 10 spaces (8-dir) or shoot. Reach guarded building. Prefab-style characters + procedural ground/trees/buildings. See README for model sources (Kenney.nl recommended for GLTF prefabs).</small>
   </div>
 
   <script src="game.js"></script>
